@@ -8,4 +8,12 @@
 /*.egg-info
 
 # pycache folders
-*/__pycache__
+*__pycache__/
+
+# DNA data files
+*.fasta
+*.paf
+*.sam
+
+# My TODO list
+TODO.md
