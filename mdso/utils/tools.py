@@ -7,7 +7,6 @@ similarity matrices
 import numpy as np
 from scipy.sparse import issparse, isspmatrix, coo_matrix, csr_matrix
 from scipy.sparse.csgraph import connected_components
-from scipy.stats import kendalltau
 
 
 def is_symmetric(m):
@@ -132,46 +131,6 @@ def get_conn_comps(mat, min_cc_len=1):
             break
         ccs_l.append(np.where(lbls == cc_idx)[0])
     return ccs_l
-
-
-def kendall_circular(true_perm, order_perm):
-    '''
-    TODO : make it faster for large n with a coarser grained slicing first,
-    i.e., taking np.roll with a larger value than 1 and then zooming in.
-    '''
-    n = true_perm.shape[0]
-    if (order_perm.shape[0] != n):
-        print("wrong length of permutations in kendall_circular!")
-    order_perm = true_perm[order_perm]
-    id_perm = np.arange(n)
-    scores = np.zeros(n)
-    for i in range(n):
-        scores[i] = abs(kendalltau(id_perm, order_perm)[0])
-        order_perm = np.roll(order_perm, 1, axis=0)
-
-    return(np.max(scores), np.argmax(scores))
-
-
-def evaluate_ordering(perm, true_perm, criterion='kendall',
-                      circular=False):
-    '''
-    evaluate the model.
-    INPUT:
-        - the ground truth permutation
-        - the ordered_chain
-    '''
-    l1 = len(perm)
-    l2 = len(true_perm)
-    if not l1 == l2:
-        print("Problem : perm of length {}, "
-              "and true_perm of length {}".format(l1, l2))
-        print("perm : {}".format(perm))
-    if criterion == 'kendall':
-        if circular:
-            (score, _) = kendall_circular(true_perm, perm)
-        else:
-            score = abs(kendalltau(true_perm, np.argsort(perm))[0])
-        return(score)
 
 
 # Graph laplacian
@@ -306,3 +265,106 @@ def _laplacian_dense(graph, normed=False, axis=0):
         m *= -1
         _setdiag_dense(m, w)
     return m, w
+
+
+def _graph_connected_component(graph, node_id):
+    """Find the largest graph connected components that contains one
+    given node
+    Parameters
+    ----------
+    graph : array-like, shape: (n_samples, n_samples)
+        adjacency matrix of the graph, non-zero weight means an edge
+        between the nodes
+    node_id : int
+        The index of the query node of the graph
+    Returns
+    -------
+    connected_components_matrix : array-like, shape: (n_samples,)
+        An array of bool value indicating the indexes of the nodes
+        belonging to the largest connected components of the given query
+        node
+    """
+    n_node = graph.shape[0]
+    if issparse(graph):
+        # speed up row-wise access to boolean connection mask
+        graph = graph.tocsr()
+    connected_nodes = np.zeros(n_node, dtype=np.bool)
+    nodes_to_explore = np.zeros(n_node, dtype=np.bool)
+    nodes_to_explore[node_id] = True
+    for _ in range(n_node):
+        last_num_component = connected_nodes.sum()
+        np.logical_or(connected_nodes, nodes_to_explore, out=connected_nodes)
+        if last_num_component >= connected_nodes.sum():
+            break
+        indices = np.where(nodes_to_explore)[0]
+        nodes_to_explore.fill(False)
+        for i in indices:
+            if issparse(graph):
+                neighbors = graph[i].toarray().ravel()
+            else:
+                neighbors = graph[i]
+            np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
+    return connected_nodes
+
+
+def _graph_is_connected(graph):
+    """ Return whether the graph is connected (True) or Not (False)
+    Parameters
+    ----------
+    graph : array-like or sparse matrix, shape: (n_samples, n_samples)
+        adjacency matrix of the graph, non-zero weight means an edge
+        between the nodes
+    Returns
+    -------
+    is_connected : bool
+        True means the graph is fully connected and False means not
+    """
+    if isspmatrix(graph):
+        # sparse graph, find all the connected components
+        n_connected_components, _ = connected_components(graph)
+        return n_connected_components == 1
+    else:
+        # dense graph, find all connected components start from node 0
+        return _graph_connected_component(graph, 0).sum() == graph.shape[0]
+
+
+def _set_diag(laplacian, value, norm_laplacian):
+    """Set the diagonal of the laplacian matrix and convert it to a
+    sparse format well suited for eigenvalue decomposition
+    Parameters
+    ----------
+    laplacian : array or sparse matrix
+        The graph laplacian
+    value : float
+        The value of the diagonal
+    norm_laplacian : bool
+        Whether the value of the diagonal should be changed or not
+    Returns
+    -------
+    laplacian : array or sparse matrix
+        An array of matrix in a form that is well suited to fast
+        eigenvalue decomposition, depending on the band width of the
+        matrix.
+    """
+    n_nodes = laplacian.shape[0]
+    # We need all entries in the diagonal to values
+    if not isspmatrix(laplacian):
+        if norm_laplacian:
+            laplacian.flat[::n_nodes + 1] = value
+    else:
+        laplacian = laplacian.tocoo()
+        if norm_laplacian:
+            diag_idx = (laplacian.row == laplacian.col)
+            laplacian.data[diag_idx] = value
+        # If the matrix has a small number of diagonals (as in the
+        # case of structured matrices coming from images), the
+        # dia format might be best suited for matvec products:
+        n_diags = np.unique(laplacian.row - laplacian.col).size
+        if n_diags <= 7:
+            # 3 or less outer diagonals on each side
+            laplacian = laplacian.todia()
+        else:
+            # csr has the fastest matvec and is thus best suited to
+            # arpack
+            laplacian = laplacian.tocsr()
+    return laplacian

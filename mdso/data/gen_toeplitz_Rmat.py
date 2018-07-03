@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Generate various Similarity matrix
-through the MatrixGenerator methods
+through the SimilarityMatrix methods
 gen_matrix for synthetic data, and
 gen_E_coli_matrix for DNA data.
 """
@@ -50,7 +50,7 @@ def gen_toeplitz_sim(lambdas):
     return(toeplitz(lambdas))
 
 
-class MatrixGenerator():
+class SimilarityMatrix():
 
     # Apply permutation
     def apply_perm(self, perm):
