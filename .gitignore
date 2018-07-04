@@ -11,9 +11,9 @@
 *__pycache__/
 
 # DNA data files
-*.fasta
-*.paf
-*.sam
+/examples/e_coli/ecoli_data/
+/examples/e_coli/software/
+/examples/e_coli/results/
 
 # My TODO list
 TODO.md

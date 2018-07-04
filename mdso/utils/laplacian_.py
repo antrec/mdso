@@ -27,9 +27,9 @@ def compute_laplacian(csgraph, normed=False, return_diag=False,
     csgraph : array_like or sparse matrix, 2 dimensions
         compressed-sparse graph, with shape (N, N).
     normed : bool or string, optional
-        If True, then compute normalized Laplacian.
+        If True, then compute normalized (symmetric) Laplacian.
         If 'random_walk', compute the random-walk normalized Laplacian.
-        If False, then unnormalized Laplacian.
+        If False or 'unnormalized', then unnormalized Laplacian.
     return_diag : bool, optional
         If True, then also return an array related to vertex degrees.
     use_out_degree : bool, optional
@@ -71,6 +71,10 @@ def compute_laplacian(csgraph, normed=False, return_diag=False,
            [  0,  -3,  -6,  21, -12],
            [  0,  -4,  -8, -12,  24]])
     """
+    # A.R. :Added the normed == 'unnormalized' option to be consistent with
+    # previous version of mdso
+    if normed == 'unnormalized':
+        normed = False
     if csgraph.ndim != 2 or csgraph.shape[0] != csgraph.shape[1]:
         raise ValueError('csgraph must be a square matrix or array')
 

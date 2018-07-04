@@ -7,7 +7,6 @@ normalization.
 So far the similarity is assumed to represent a fully connected graph.
 '''
 import warnings
-import time
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
@@ -248,11 +247,14 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
 if __name__ == '__main__':
 
+    from time import time
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
     from mdso import SimilarityMatrix
 
+# ############ Synthetic example ################
     # Set parameters for data generation
+    t0 = time()
     n = 500
     type_noise = 'gaussian'
     ampl_noise = 0.5
@@ -263,14 +265,30 @@ if __name__ == '__main__':
     data_gen.gen_matrix(n, type_matrix=type_similarity, apply_perm=apply_perm,
                         noise_ampl=ampl_noise, law=type_noise)
     mat = data_gen.sim_matrix
-    embedding = spectral_embedding(mat, norm_laplacian='random_walk',
-                                   scale_embedding='heuristic')
+    t1 = time()
+    print("Generated similarity matrix -- {}".format(t1-t0))
+    # Check it runs fine with different options
+    norm_lap_opts = ['unnormalized', 'symmetric', 'random_walk']
+    scaling_opts = [True, 'CTD', 'heuristic']
+    norm_adj_opts = ['coifman', None]
+    for norm_lap in norm_lap_opts:
+        for scale in scaling_opts:
+            for norm_adj in norm_adj_opts:
+                t_b = time()
+                embedding = spectral_embedding(mat, norm_laplacian=norm_lap,
+                                               scale_embedding=scale,
+                                               norm_adjacency=norm_adj)
+                print("Computed embedding with norm_lap : {}, \
+                      scale_embedding : {}, in {}s.".format(norm_lap,
+                                                            scale,
+                                                            time()-t_b))
     fig = plt.figure()
     ax = Axes3D(fig)
     ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
                c=np.arange(n))
     plt.show()
 
+# ############ Synthetic example ################
     # t0 = time()
     embedding = spectral_embedding(new_mat, norm_laplacian=False,
                                    scale_embedding=False, eigen_solver='amg',

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-S_new #futur similarity matrix
+S_new #future similarity matrix
 For each point:
     find neighborhood
     fit line
     update elements of S_new
 """
 import numpy as np
-from scipy.sparse import find, coo_matrix
-from sklearn.decomposition import PCA
+from scipy.sparse import coo_matrix
 from sklearn.neighbors import BallTree
 from scipy.linalg import svd
 
@@ -67,16 +66,14 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=True,
 
         # normalize dissimilarity
         if norm_local_diss:
-            v_sub = v_sub * 1./v_sub.max()
+            v_sub /= v_sub.max()
 
         # update Diss_new or S_new
-        i_sub = nrst_nbrs[i_sub]
-        j_sub = nrst_nbrs[j_sub]
-        i_idx.extend(list(i_sub))
-        j_idx.extend(list(j_sub))
-        v_diss.extend(list(v_sub))
+        i_idx.extend(nrst_nbrs[i_sub])
+        j_idx.extend(nrst_nbrs[j_sub])
+        v_diss.extend(v_sub)
         # Update count
-        v_cpt.extend(list(np.ones(len(v_sub))))
+        v_cpt.extend(np.ones(len(v_sub)))
 
     i_idx = np.array(i_idx)
     j_idx = np.array(j_idx)
@@ -86,13 +83,15 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=True,
         # create count matrix and invert it, and normalize Diss_new
         count_mat = coo_matrix((v_cpt, (i_idx, j_idx)),
                                shape=(n, n), dtype=int)
-        (i_count, j_count, v_count) = find(count_mat)
-        inv_count_mat = coo_matrix((1./v_count, (i_count, j_count)),
-                                   shape=(n, n), dtype='float')
+        # (i_count, j_count, v_count) = find(count_mat)
+        # inv_count_mat = coo_matrix((1./v_count, (i_count, j_count)),
+        #                            shape=(n, n), dtype='float')
     if not(type_simil):
         # Dissimilarity matrix
         S_new = coo_matrix((v_diss, (i_idx, j_idx)))
-        S_new.multiply(inv_count_mat)
+        S_new.data /= count_mat.data
+        # S_new.multiply(inv_count_mat)
+        # Switch from distance matrix to similarity matrix by taking max - self
         S_new.data *= -1
         S_new.data -= S_new.data.min()
         # S_new *= -1
@@ -108,7 +107,8 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=True,
     if type_simil:
         S_new = coo_matrix((v_sim, (i_idx, j_idx)))
         if norm_sim:
-            S_new.multiply(inv_count_mat)
+            S_new.data /= count_mat.data
+            # S_new.multiply(inv_count_mat)
 
     if return_dense:
         S_new = S_new.toarray()
@@ -164,5 +164,3 @@ print('new - elapsed : {}'.format(t1-t0))
     plt.show()
 
     k_nbrs = 30
-    %timeit -r 10 tree = BallTree(embedding); tree.query(embedding, k=k_nbrs)
-    %timeit -r 10 get_nns_dense(embedding, k_nbrs)
