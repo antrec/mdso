@@ -369,10 +369,15 @@ if __name__ == '__main__':
 
     sim_mat_fn = data_dir + 'sim_mat.npz'
     if not os.path.exists(sim_mat_fn):
+        # Build similarity matrix
         sim_mat = build_sim_mat(ovlp_fn, reads_fn, percentile_thr=0)
         if not isinstance(sim_mat, coo_matrix):
             sim_mat = coo_matrix(sim_mat)
-        np.savez(sim_mat_fn, data=sim_mat.data, rows=sim_mat.row,
-                 cols=sim_mat.col, shape=sim_mat.shape)
+        # Get the true position of the reads
+        alns_df = get_pos_from_aln_file(aln_fn, reads_fn)
+        positions = alns_df['pos'].values
+        # Save results to file
+        np.savez(sim_mat_fn, data=sim_mat.data, row=sim_mat.row,
+                 col=sim_mat.col, shape=sim_mat.shape, pos=positions)
     else:
         print('file {} already exists. Exiting.'.format(sim_mat_fn))
