@@ -271,10 +271,10 @@ if __name__ == '__main__':
                c=np.arange(n))
     plt.show()
 
-    t0 = time()
-    # embedding = spectral_embedding(new_mat, norm_laplacian=False,
-    #                                scale_embedding=False, eigen_solver='amg',
-    #                                norm_adjacency='coifman')
+    # t0 = time()
+    embedding = spectral_embedding(new_mat, norm_laplacian=False,
+                                   scale_embedding=False, eigen_solver='amg',
+                                   norm_adjacency='coifman')
     # t1 = time()
     # print('computed embedding in {}'.format(t1 - t0))
     # fig = plt.figure()
