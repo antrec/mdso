@@ -81,9 +81,6 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_by_max=False,
 
     S_new = coo_matrix((v_diss, (i_idx, j_idx)), shape=(n, n), dtype='float64')
 
-    # if not type_simil:
-    #     norm_by_count = True
-
     if norm_by_count:
         # create count matrix and use inverse to normalize Diss_new
         count_mat = coo_matrix((v_cpt, (i_idx, j_idx)),

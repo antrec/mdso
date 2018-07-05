@@ -67,7 +67,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
-    norm_laplacian : bool or string, optional, default=True
+    norm_laplacian : bool or string, optional, default=False
         If True, then compute normalized Laplacian.
         If 'random_walk', compute the random_walk normalization
         [see e.g. https://arxiv.org/abs/0711.0189]

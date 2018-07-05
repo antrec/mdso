@@ -15,5 +15,8 @@
 /examples/e_coli/software/
 /examples/e_coli/results/
 
+# Experiments results
+/exps/results/
+
 # My TODO list
 TODO.md

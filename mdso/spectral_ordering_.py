@@ -59,7 +59,8 @@ class SpectralBaseline():
         self.circular = circular
         if circular:
             if not norm_laplacian:
-                norm_laplacian = 'random_walk'
+                norm_laplacian = 'unnormalized'
+                # norm_laplacian = 'random_walk'
         else:
             if not norm_laplacian:
                 norm_laplacian = 'unnormalized'
@@ -143,7 +144,7 @@ class SpectralOrdering():
             If it is, then new_sim is also returned dense (otherwise sparse).
     """
     def __init__(self, n_components=8, k_nbrs=10, norm_adjacency=False,
-                 norm_laplacian='random_walk', scale_embedding='heuristic',
+                 norm_laplacian='unnormalized', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
                  merge_if_ccs=False, eigen_solver=None, circular=False):
@@ -223,6 +224,7 @@ class SpectralOrdering():
                     eigen_solver=self.eigen_solver)
                 ordering_algo.fit(self.new_sim)
                 self.ordering = ordering_algo.ordering_
+                self.new_embedding = ordering_algo.new_embedding_
             else:
                 warnings.warn("new similarity disconnected. Reordering \
                               connected components.")
