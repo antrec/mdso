@@ -146,4 +146,4 @@ def get_conn_comps(mat, min_cc_len=1):
         if len_ccs[i] < min_cc_len:
             break
         ccs_l.append(np.where(lbls == cc_idx)[0])
-    return ccs_l
+    return ccs_l, n_c

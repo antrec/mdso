@@ -99,9 +99,42 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=False,
     elif type_simil == 'inv':
         S_new.data = 1./S_new.data
     else:
-        raise ValueError('algo_local_ordering.simil must be exp or inv.')
+        raise ValueError('type_simil must be exp or inv or None.')
 
     return(S_new)
+
+
+def find_isolated(embedding, k_nbrs=10):
+    (n_, d_) = embedding.shape
+    isolated = []
+    dist_to_nbrs = np.zeros(n_)
+
+    # Get the neighbors for all points at once
+    tree = BallTree(embedding)
+    _, all_nbrs = tree.query(embedding, k=k_nbrs)
+
+    for idx in range(n_):
+        # if idx % 100 == 0:
+        #     print('.', end='')
+        #     if idx % 1000 == 0:
+        #         print('{}'.format(idx), end='')
+        nrst_nbrs = all_nbrs[idx]
+        nrst_nbrs = nrst_nbrs[1:]  # remove self edge from neighbors
+        if len(nrst_nbrs) < 2:
+            isolated.append(idx)
+            continue
+
+        sub_embedding = embedding[nrst_nbrs, :]
+        # Make a linear fit without the neighbor itself
+        b = np.mean(sub_embedding, axis=0)
+        sub_embedding = sub_embedding - b
+        _, _, V = svd(sub_embedding, full_matrices=False)
+        w = V[0]
+        this_point = embedding[idx, :] - b
+        this_proj = float(np.dot(this_point, w.T))
+        this_dist = np.sum(this_point**2) - this_proj**2
+        dist_to_nbrs[idx] = this_dist
+    return (dist_to_nbrs, isolated)
 
 
 if __name__ == '__main__':
@@ -204,11 +237,11 @@ if __name__ == '__main__':
                                            norm_adjacency='coifman')
         t3 = time()
         print("Computed Laplacian embedding - {}s".format(t3-t2))
-        # fig = plt.figure()
-        # ax = Axes3D(fig)
-        # ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
-        #            c=true_inv_perm)
-        # plt.title("3d embedding of DNA overlap based similarity matrix")
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
+                   c=true_inv_perm)
+        plt.title("3d embedding of DNA overlap based similarity matrix")
 
         t0 = time()
         S_new = gen_sim_from_embedding(embedding, k_nbrs=20,

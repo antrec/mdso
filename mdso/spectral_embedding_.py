@@ -122,6 +122,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     # Whether to drop the first eigenvector
     if drop_first:
         n_components = n_components + 1
+    if n_components > n_nodes:
+        print(" n_components ({}) > ({}) n_nodes. setting \
+              n_components=n_nodes".format(n_components, n_nodes))
+        n_components = n_nodes
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
@@ -316,7 +320,7 @@ if __name__ == '__main__':
         t1 = time()
         print("Built similarity matrix - {}s".format(t1-t0))
         # Restrict to main connected component if disconnected similarity
-        ccs = get_conn_comps(sim_mat, min_cc_len=10)
+        ccs, n_c = get_conn_comps(sim_mat, min_cc_len=10)
         sub_idxs = ccs[0]
         new_mat = sim_mat.tolil()[sub_idxs, :]
         new_mat = new_mat.T[sub_idxs, :].T
