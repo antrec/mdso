@@ -41,8 +41,8 @@ def fit_line_get_proj_dist(X):
     return(iis[idx_pos], jjs[idx_pos], diffs[idx_pos])
 
 
-def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=False,
-                           norm_sim=True, type_simil=None):
+def gen_sim_from_embedding(embedding, k_nbrs=10, norm_by_max=False,
+                           norm_by_count=True, type_simil=None):
     """
     """
     (n, dim) = np.shape(embedding)
@@ -69,7 +69,7 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=False,
         i_sub, j_sub, v_sub = fit_line_get_proj_dist(sub_embedding)
 
         # normalize dissimilarity
-        if norm_local_diss:
+        if norm_by_max:
             v_sub /= v_sub.max()
 
         # update Diss_new
@@ -82,9 +82,9 @@ def gen_sim_from_embedding(embedding, k_nbrs=10, norm_local_diss=False,
     S_new = coo_matrix((v_diss, (i_idx, j_idx)), shape=(n, n), dtype='float64')
 
     # if not type_simil:
-    #     norm_sim = True
+    #     norm_by_count = True
 
-    if norm_sim:
+    if norm_by_count:
         # create count matrix and use inverse to normalize Diss_new
         count_mat = coo_matrix((v_cpt, (i_idx, j_idx)),
                                shape=(n, n), dtype=int)
@@ -165,17 +165,17 @@ if __name__ == '__main__':
     ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
                c=np.arange(n))
 
-    norm_local_diss_opts = [True, False]
-    norm_sim_opts = [False, True]
+    norm_by_max_opts = [True, False]
+    norm_by_count_opts = [False, True]
     type_sim_opts = ['inv', 'exp', None]
 
-    for norm_local_diss in norm_local_diss_opts:
+    for norm_by_max in norm_by_max_opts:
         for type_simil in type_sim_opts:
-            for norm_sim in norm_sim_opts:
+            for norm_by_count in norm_by_count_opts:
                 t0 = time()
                 S_new = gen_sim_from_embedding(embedding, k_nbrs=20,
-                                               norm_local_diss=norm_local_diss,
-                                               norm_sim=norm_sim,
+                                               norm_by_max=norm_by_max,
+                                               norm_by_count=norm_by_count,
                                                type_simil=type_simil)
                 t1 = time()
                 print('computed new similarity from embedding \
@@ -211,7 +211,7 @@ if __name__ == '__main__':
         t1 = time()
         print("Built similarity matrix - {}s".format(t1-t0))
         # Restrict to main connected component if disconnected similarity
-        ccs = get_conn_comps(sim_mat, min_cc_len=10)
+        ccs, n_c = get_conn_comps(sim_mat, min_cc_len=10)
         sub_idxs = ccs[0]
         new_mat = sim_mat.tolil()[sub_idxs, :]
         new_mat = new_mat.T[sub_idxs, :].T
@@ -245,8 +245,8 @@ if __name__ == '__main__':
 
         t0 = time()
         S_new = gen_sim_from_embedding(embedding, k_nbrs=20,
-                                       norm_local_diss=False,
-                                       norm_sim=True,
+                                       norm_by_max=False,
+                                       norm_by_count=True,
                                        type_simil=None)
         t1 = time()
         print('computed new similarity from embedding \

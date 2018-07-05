@@ -20,7 +20,7 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=1e-15,
                        norm_laplacian=False, drop_first=True,
-                       norm_adjacency=False, scale_embedding=True,
+                       norm_adjacency=False, scale_embedding=False,
                        verb=0):
     """
 

@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 from .spectral_embedding_ import spectral_embedding
 from .gen_sim_from_embedding_ import gen_sim_from_embedding
 from .utils import get_conn_comps
-from .merge_connected_components_ import merge_conn_comp
+from .merge_conn_comp_ import merge_conn_comp
 
 
 def get_linear_ordering(new_embedding):
@@ -54,7 +54,8 @@ class SpectralBaseline():
     For Circular Seriation, uses Coifman's method [ref]
     """
     def __init__(self, circular=False, norm_laplacian=None,
-                 norm_adjacency=None, eigen_solver=None):
+                 norm_adjacency=None, eigen_solver=None,
+                 scale_embedding=False):
         self.circular = circular
         if circular:
             if not norm_laplacian:
@@ -65,6 +66,7 @@ class SpectralBaseline():
         self.norm_laplacian = norm_laplacian
         self.norm_adjacency = norm_adjacency
         self.eigen_solver = eigen_solver
+        self.scale_embedding = scale_embedding
 
     def fit(self, X):
         """
@@ -77,7 +79,9 @@ class SpectralBaseline():
         # Get 1d or 2d Spectral embedding to retrieve the latent ordering
         self.new_embedding_ = spectral_embedding(
             X, norm_adjacency=self.norm_adjacency,
-            eigen_solver=self.eigen_solver)
+            norm_laplacian=self.norm_laplacian,
+            eigen_solver=self.eigen_solver,
+            scale_embedding=self.scale_embedding)
 
         if self.circular:
             self.ordering_ = get_circular_ordering(self.new_embedding_)
@@ -142,7 +146,7 @@ class SpectralOrdering():
                  norm_laplacian='random_walk', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
-                 merge_if_ccs=False, eigen_solver=None):
+                 merge_if_ccs=False, eigen_solver=None, circular=False):
 
         self.n_components = n_components
         self.k_nbrs = k_nbrs
@@ -156,6 +160,7 @@ class SpectralOrdering():
         self.min_cc_len = min_cc_len
         self.merge_if_ccs = merge_if_ccs
         self.eigen_solver = eigen_solver
+        self.circular = circular
 
     def merge_connected_components(self, X, mode='similarity'):
         """
