@@ -54,7 +54,7 @@ class SpectralBaseline():
     For Circular Seriation, uses Coifman's method [ref]
     """
     def __init__(self, circular=False, norm_laplacian=None,
-                 norm_adjacency=None, scale_embedding=False):
+                 norm_adjacency=None, eigen_solver=None):
         self.circular = circular
         if circular:
             if not norm_laplacian:
@@ -64,7 +64,7 @@ class SpectralBaseline():
                 norm_laplacian = 'unnormalized'
         self.norm_laplacian = norm_laplacian
         self.norm_adjacency = norm_adjacency
-        self.scale_embedding = scale_embedding
+        self.eigen_solver = eigen_solver
 
     def fit(self, X):
         """
@@ -76,9 +76,8 @@ class SpectralBaseline():
             raise ValueError("The input matrix is not connected")
         # Get 1d or 2d Spectral embedding to retrieve the latent ordering
         self.new_embedding_ = spectral_embedding(
-            X, norm_laplacian=self.norm_laplacian,
-            norm_adjacency=self.norm_adjacency,
-            scale_embedding=self.scale_embedding)
+            X, norm_adjacency=self.norm_adjacency,
+            eigen_solver=self.eigen_solver)
 
         if self.circular:
             self.ordering_ = get_circular_ordering(self.new_embedding_)
@@ -143,7 +142,7 @@ class SpectralOrdering():
                  norm_laplacian='random_walk', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
-                 merge_if_ccs=False):
+                 merge_if_ccs=False, eigen_solver=None):
 
         self.n_components = n_components
         self.k_nbrs = k_nbrs
@@ -156,6 +155,7 @@ class SpectralOrdering():
         self.preprocess_only = preprocess_only
         self.min_cc_len = min_cc_len
         self.merge_if_ccs = merge_if_ccs
+        self.eigen_solver = eigen_solver
 
     def merge_connected_components(self, X, mode='similarity'):
         """
@@ -181,10 +181,12 @@ class SpectralOrdering():
         Creates a Laplacian embedding and a new similarity matrix
         """
 
-        # If n_components == 1, just run the baseline spectral method
         if self.n_components == 1:
-
-            ordering_algo = SpectralBaseline(circular=self.circular)
+            # If n_components == 1, just run the baseline spectral method
+            ordering_algo = SpectralBaseline(
+                circular=self.circular,
+                norm_adjacency=self.norm_adjacency,
+                eigen_solver=self.eigen_solver)
             ordering_algo.fit(X)
             self.ordering = ordering_algo.ordering_
             return(self)
@@ -195,7 +197,8 @@ class SpectralOrdering():
                 X, n_components=self.n_components,
                 norm_laplacian=self.norm_laplacian,
                 norm_adjacency=self.norm_adjacency,
-                scale_embedding=self.scale_embedding)
+                scale_embedding=self.scale_embedding,
+                eigen_solver=self.eigen_solver)
 
             # Get the cleaned similarity matrix from the embedding
             self.new_sim = gen_sim_from_embedding(
@@ -210,7 +213,9 @@ class SpectralOrdering():
             ccs, n_c = get_conn_comps(self.new_sim)
             if n_c == 1:
                 # Create a baseline spectral seriation solver
-                ordering_algo = SpectralBaseline(circular=self.circular)
+                ordering_algo = SpectralBaseline(
+                    circular=self.circular, norm_adjacency=self.norm_adjacency,
+                    eigen_solver=self.eigen_solver)
                 ordering_algo.fit(self.new_sim)
                 self.ordering = ordering_algo.ordering_
             else:
@@ -219,7 +224,9 @@ class SpectralOrdering():
                 # Create a baseline spectral seriation solver
                 # Set circular=False because if we have broken the circle
                 # in several pieces, we only have local linear orderings.
-                ordering_algo = SpectralBaseline(circular=False)
+                ordering_algo = SpectralBaseline(
+                    circular=False, norm_adjacency=self.norm_adjacency,
+                    eigen_solver=self.eigen_solver)
 
                 self.partial_orderings = []
                 # Convert sparse matrix to lil format for slicing
