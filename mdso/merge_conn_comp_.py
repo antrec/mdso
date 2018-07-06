@@ -135,7 +135,7 @@ def find_contig(end_sigma, begin_sigma,
             return(l_c_e[::-1], 'end')
 
 
-def merge_conn_comp(l_connected, sim, emb, h=5, mode='similarity',
+def merge_conn_comp(l_connected, sim, emb=None, h=5, mode='similarity',
                     seed_comp_idx=None):
     '''
     Implementation of Algorithm 4.
@@ -161,10 +161,13 @@ def merge_conn_comp(l_connected, sim, emb, h=5, mode='similarity',
     # check parameters
     if mode not in ['similarity', 'embedding']:
         raise ValueError('mode should be either similarity or embedding.')
+    if mode == 'embedding' and emb is None:
+        raise ValueError('In embedding mode, \
+                         keyword argument emb must be given')
     # initialize
     l_c = copy.copy(l_connected)
     if seed_comp_idx:
-        if seed_comp_idx > len(l_c):
+        if seed_comp_idx > len(l_c) - 1:
             seed_comp_idx = 0
         seed_cc = l_c[seed_comp_idx]
         l_c.remove(seed_cc)
@@ -190,9 +193,9 @@ def merge_conn_comp(l_connected, sim, emb, h=5, mode='similarity',
         elif end_or_begin == 'begin':
             sigma = l_closest + sigma
         else:  # Added a case where there is no match in beginning or end
-            warnings.warn("The connected components could not be merged with"
-                          " the input similarity matrix ! Returning a sequence"
-                          " of reordered connected components.")
+            warnings.warn("The connected components could not be merged with\
+                           the input similarity matrix ! Returning a sequence\
+                           of reordered connected components.")
             l_c.append(sigma)
             return(l_c)
 

@@ -114,6 +114,13 @@ class SpectralOrdering():
         type of normalization of the Laplacianm Can be "unnormalized",
         "random_walk", or "symmetric".
 
+    norm_adjacency : str or bool, default 'coifman'
+        If 'coifman', use the normalization of the similarity matrix,
+        W = Dinv @ W @ Dinv, to account for non uniform sampling of points on
+        a 1d manifold (from Lafon and Coifman's approximation of the Laplace
+        Beltrami operator)
+        TODO : also implement the 'sinkorn' normalization
+
     scaled : string or boolean, default True
         if scaled is False, the embedding is just the concatenation of the
         eigenvectors of the Laplacian, i.e., all dimensions have the same
@@ -131,6 +138,7 @@ class SpectralOrdering():
     merge_if_ccs : bool, default False
         if the new similarity matrix is disconnected
 
+
     Attributes
         ----------
         embedding : array-like, (n_pts, dim)
@@ -143,7 +151,7 @@ class SpectralOrdering():
             whether the input matrix is dense or not.
             If it is, then new_sim is also returned dense (otherwise sparse).
     """
-    def __init__(self, n_components=8, k_nbrs=15, norm_adjacency=False,
+    def __init__(self, n_components=8, k_nbrs=15, norm_adjacency='coifman',
                  norm_laplacian='unnormalized', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
@@ -226,8 +234,8 @@ class SpectralOrdering():
                 self.ordering = ordering_algo.ordering_
                 self.new_embedding = ordering_algo.new_embedding_
             else:
-                warnings.warn("new similarity disconnected. Reordering \
-                              connected components.")
+                warnings.warn("new similarity disconnected. Reordering"
+                              "connected components.")
                 # Create a baseline spectral seriation solver
                 # Set circular=False because if we have broken the circle
                 # in several pieces, we only have local linear orderings.
