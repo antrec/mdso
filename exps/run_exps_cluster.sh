@@ -5,7 +5,7 @@ memory=3500M
 vmemory=3800M
 nb_node=22
 
-pythonfile="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/mdso/exps/parse_args_run_one_exp.py"
+pythonfile="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/exps/parse_args_run_one_exp.py"
 cd /sequoia/data1/arecanat/RobustSeriationEmbedding/
 
 exp_dir="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/exps/results/"

@@ -107,7 +107,7 @@ class SpectralOrdering():
     dim : int, default 10
         The number of dimensions of the spectral embedding.
 
-    k_nbrs : int, default 10
+    k_nbrs : int, default 15
         The number of nearest neighbors in the local alignment algorithm.
 
     type_laplacian : string, default "random_walk"
@@ -143,7 +143,7 @@ class SpectralOrdering():
             whether the input matrix is dense or not.
             If it is, then new_sim is also returned dense (otherwise sparse).
     """
-    def __init__(self, n_components=8, k_nbrs=10, norm_adjacency=False,
+    def __init__(self, n_components=8, k_nbrs=15, norm_adjacency=False,
                  norm_laplacian='unnormalized', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
@@ -240,10 +240,15 @@ class SpectralOrdering():
                 if issparse(X):
                     self.new_sim = self.new_sim.tolil()
                 else:
-                    self.new_sim = self.new_sim.todense()
+                    self.new_sim = self.new_sim.toarray()
                 for cc_idx, in_cc in enumerate(ccs):
                     if len(in_cc) < self.min_cc_len:
                         break
+                    # Change the eigen_solver depending on size and sparsity
+                    if issparse(X) and len(in_cc) > 5000:
+                        ordering_algo.eigen_solver = 'amg'
+                    else:
+                        ordering_algo.eigen_solver = 'arpack'
                     ordering_algo.fit(self.new_sim[in_cc, :][:, in_cc])
                     self.partial_orderings.append(
                         in_cc[ordering_algo.ordering_])

@@ -19,7 +19,7 @@ def fit_line_get_proj_dist(X):
     local distance matrix in the neighborhood (used to add to the new
     similarity in gen_sim_from_embedding).
     """
-    (n_, d_) = np.shape(X)
+    (k_, d_) = np.shape(X)
 
     # Make a linear fit
     b = np.mean(X, axis=0)
@@ -28,12 +28,12 @@ def fit_line_get_proj_dist(X):
 
     # Use projection on the line fit
     Xproj = np.dot(X, V[0].T)
-    # assert(Xproj.shape[0] == n_)
+    # assert(Xproj.shape[0] == k_)
 
     # Return local dissimilarity matrix in coo-values format
-    diffs = np.abs(np.tile(Xproj, n_) - np.repeat(Xproj, n_))
-    iis = np.repeat(np.arange(n_), n_)
-    jjs = np.tile(np.arange(n_), n_)
+    diffs = np.abs(np.tile(Xproj, k_) - np.repeat(Xproj, k_))
+    iis = np.repeat(np.arange(k_), k_)
+    jjs = np.tile(np.arange(k_), k_)
 
     # Restrict to nonzero values (exclude the main diagonal)
     idx_pos = np.where(diffs > 0)[0]
