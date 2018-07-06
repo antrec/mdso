@@ -442,7 +442,8 @@ if __name__ == '__main__':
         os.mkdir(save_res_dir)
     # Run experiments
     run_synthetic_exps(n, k, dim_l, ampl_l, type_matrix_l, scaled,
-                       n_avrg=n_avrg, save_res_dir=save_res_dir)
+                       n_avrg=n_avrg, save_res_dir=save_res_dir,
+                       norm_laplacian_l='random_walk')
 
     # Make the Figures from the paper
     for type_matrix in type_matrix_l:
@@ -451,32 +452,33 @@ if __name__ == '__main__':
         fig_name = save_res_dir + '/' + fig_name
 
         plot_from_res(n, k, dim_l, ampl_l, type_matrix, scaled,
-                      norm_laplacian_l=None, n_avrg=n_avrg,
+                      norm_laplacian_l='random_walk', n_avrg=n_avrg,
                       save_res_dir=save_res_dir,
                       save_fig_path=fig_name)
-
-    n = 500
-    k = 15
-    dim = 10
-    ampl_l = [0.01, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-    n_avrg = 100
-    # type_matrix_l = ['CircularStrongDecrease']
-    type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
-                     'CircularBanded', 'LinearBanded']
-    scaled_l = ['heuristic', True, 'CTD', False]
-    # Run experiments
-    run_synthetic_exps(n, k, dim, ampl_l, type_matrix_l, scaled_l,
-                       n_avrg=n_avrg, save_res_dir=save_res_dir)
-
-    for type_matrix in type_matrix_l:
-        fig_name = "kendall-tau-vs-noise-for-several-scalings-typematrix"\
-                   "_{}.pdf".format(type_matrix)
-        fig_name = save_res_dir + '/' + fig_name
-
-        plot_from_res(n, k, dim, ampl_l, type_matrix, scaled_l,
-                      norm_laplacian_l=None, n_avrg=n_avrg,
-                      save_res_dir=save_res_dir,
-                      save_fig_path=fig_name)
+    #
+    # n = 500
+    # k = 15
+    # dim = 10
+    # ampl_l = [0.01, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    # n_avrg = 100
+    # # type_matrix_l = ['CircularStrongDecrease']
+    # type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
+    #                  'CircularBanded', 'LinearBanded']
+    # scaled_l = ['heuristic', True, 'CTD', False]
+    # # Run experiments
+    # run_synthetic_exps(n, k, dim, ampl_l, type_matrix_l, scaled_l,
+    #                    n_avrg=n_avrg, save_res_dir=save_res_dir,
+    #                    norm_laplacian_l=None)
+    #
+    # for type_matrix in type_matrix_l:
+    #     fig_name = "kendall-tau-vs-noise-for-several-scalings-typematrix"\
+    #                "_{}.pdf".format(type_matrix)
+    #     fig_name = save_res_dir + '/' + fig_name
+    #
+    #     plot_from_res(n, k, dim, ampl_l, type_matrix, scaled_l,
+    #                   norm_laplacian_l=None, n_avrg=n_avrg,
+    #                   save_res_dir=save_res_dir,
+    #                   save_fig_path=fig_name)
 # ampl = 0
 # dim = 1
 # i_exp = 0
