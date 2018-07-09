@@ -430,7 +430,7 @@ if __name__ == '__main__':
     n = 500
     k = 15
     dim_l = [1, 3, 5, 7, 10, 15, 20]
-    ampl_l = [0.01, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    ampl_l = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
     n_avrg = 100
     type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
                      'CircularBanded', 'LinearBanded']
@@ -456,19 +456,19 @@ if __name__ == '__main__':
                       save_res_dir=save_res_dir,
                       save_fig_path=fig_name)
 
-    k_l = [5, 7, 10, 12, 15, 20, 30]
-    dim = 10
-    # Run experiments
-    run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
-                       n_avrg=n_avrg, save_res_dir=save_res_dir)
-
-    # Make the Figures from the paper
-    for type_matrix in type_matrix_l:
-        fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
-                   "".format(type_matrix)
-        fig_name = save_res_dir + fig_name
-
-        plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
-                      norm_laplacian_l=None, n_avrg=n_avrg,
-                      save_res_dir=save_res_dir,
-                      save_fig_link=fig_name)
+    # k_l = [5, 7, 10, 12, 15, 20, 30]
+    # dim = 10
+    # # Run experiments
+    # run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
+    #                    n_avrg=n_avrg, save_res_dir=save_res_dir)
+    #
+    # # Make the Figures from the paper
+    # for type_matrix in type_matrix_l:
+    #     fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
+    #                "".format(type_matrix)
+    #     fig_name = save_res_dir + fig_name
+    #
+    #     plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
+    #                   norm_laplacian_l=None, n_avrg=n_avrg,
+    #                   save_res_dir=save_res_dir,
+    #                   save_fig_link=fig_name)
