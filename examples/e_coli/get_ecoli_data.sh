@@ -15,6 +15,17 @@ if [ ! "$EXIT_STATUS" -eq "0" ]; then
   fi
 fi
 
+# Install pyamg, which speeds up the spectral embedding for large, sparse mat
+python -c "from pyamg import smoothed_aggregation_solver"
+EXIT_STATUS=$?
+if [ ! "$EXIT_STATUS" -eq "0" ]; then
+  conda install pyamg
+  EXIT_STATUS=$?
+  if [ ! "$EXIT_STATUS" -eq "0" ]; then
+    pip install pyamg
+  fi
+fi
+
 # Download E. coli ONT data and reference genome
 cd $SRC_DIR
 if [ ! -d ecoli_data ]; then

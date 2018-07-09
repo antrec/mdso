@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Script to run a batch of n_avrg experiments with a fixed combination of
-parameters (n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian), useful if you
-wish to run experiments on a cluster, with a loop on the values of (n, k, dim,
-ampl_noise, type_mat, scaled, norm_laplacian) in a shell script (e.g.,
-run_exps_cluster.sh) with my SGE cluster.
+parameters (n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian), useful if
+you wish to run experiments on a cluster, with a loop on the values of
+(n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian) in a shell script
+(e.g., run_exps_cluster.sh) with my SGE cluster.
 """
 import os
 import argparse

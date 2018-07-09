@@ -107,12 +107,19 @@ class SpectralOrdering():
     dim : int, default 10
         The number of dimensions of the spectral embedding.
 
-    k_nbrs : int, default 10
+    k_nbrs : int, default 15
         The number of nearest neighbors in the local alignment algorithm.
 
     type_laplacian : string, default "random_walk"
         type of normalization of the Laplacianm Can be "unnormalized",
         "random_walk", or "symmetric".
+
+    norm_adjacency : str or bool, default 'coifman'
+        If 'coifman', use the normalization of the similarity matrix,
+        W = Dinv @ W @ Dinv, to account for non uniform sampling of points on
+        a 1d manifold (from Lafon and Coifman's approximation of the Laplace
+        Beltrami operator)
+        TODO : also implement the 'sinkorn' normalization
 
     scaled : string or boolean, default True
         if scaled is False, the embedding is just the concatenation of the
@@ -131,6 +138,7 @@ class SpectralOrdering():
     merge_if_ccs : bool, default False
         if the new similarity matrix is disconnected
 
+
     Attributes
         ----------
         embedding : array-like, (n_pts, dim)
@@ -143,7 +151,7 @@ class SpectralOrdering():
             whether the input matrix is dense or not.
             If it is, then new_sim is also returned dense (otherwise sparse).
     """
-    def __init__(self, n_components=8, k_nbrs=10, norm_adjacency=False,
+    def __init__(self, n_components=8, k_nbrs=15, norm_adjacency='coifman',
                  norm_laplacian='unnormalized', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
@@ -177,8 +185,7 @@ class SpectralOrdering():
             return self
         else:
             self.ordering = merge_conn_comp(self.partial_orderings, X,
-                                            self.embedding, h=self.k_nbrs,
-                                            mode=mode)
+                                            h=self.k_nbrs)
             self.ordering = np.array(self.ordering)
         return self
 
@@ -226,8 +233,9 @@ class SpectralOrdering():
                 self.ordering = ordering_algo.ordering_
                 self.new_embedding = ordering_algo.new_embedding_
             else:
-                warnings.warn("new similarity disconnected. Reordering \
-                              connected components.")
+                warning_msg = "new similarity disconnected. Reordering"\
+                              " connected components."
+                warnings.warn(warning_msg)
                 # Create a baseline spectral seriation solver
                 # Set circular=False because if we have broken the circle
                 # in several pieces, we only have local linear orderings.
@@ -240,10 +248,15 @@ class SpectralOrdering():
                 if issparse(X):
                     self.new_sim = self.new_sim.tolil()
                 else:
-                    self.new_sim = self.new_sim.todense()
+                    self.new_sim = self.new_sim.toarray()
                 for cc_idx, in_cc in enumerate(ccs):
                     if len(in_cc) < self.min_cc_len:
                         break
+                    # Change the eigen_solver depending on size and sparsity
+                    if issparse(X) and len(in_cc) > 5000:
+                        ordering_algo.eigen_solver = 'amg'
+                    else:
+                        ordering_algo.eigen_solver = 'arpack'
                     ordering_algo.fit(self.new_sim[in_cc, :][:, in_cc])
                     self.partial_orderings.append(
                         in_cc[ordering_algo.ordering_])

@@ -455,107 +455,20 @@ if __name__ == '__main__':
                       norm_laplacian_l='random_walk', n_avrg=n_avrg,
                       save_res_dir=save_res_dir,
                       save_fig_path=fig_name)
-    #
-    # n = 500
-    # k = 15
-    # dim = 10
-    # ampl_l = [0.01, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-    # n_avrg = 100
-    # # type_matrix_l = ['CircularStrongDecrease']
-    # type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
-    #                  'CircularBanded', 'LinearBanded']
-    # scaled_l = ['heuristic', True, 'CTD', False]
-    # # Run experiments
-    # run_synthetic_exps(n, k, dim, ampl_l, type_matrix_l, scaled_l,
-    #                    n_avrg=n_avrg, save_res_dir=save_res_dir,
-    #                    norm_laplacian_l=None)
-    #
-    # for type_matrix in type_matrix_l:
-    #     fig_name = "kendall-tau-vs-noise-for-several-scalings-typematrix"\
-    #                "_{}.pdf".format(type_matrix)
-    #     fig_name = save_res_dir + '/' + fig_name
-    #
-    #     plot_from_res(n, k, dim, ampl_l, type_matrix, scaled_l,
-    #                   norm_laplacian_l=None, n_avrg=n_avrg,
-    #                   save_res_dir=save_res_dir,
-    #                   save_fig_path=fig_name)
-# ampl = 0
-# dim = 1
-# i_exp = 0
-# for i_exp in range(10):
-#     np.random.seed(i_exp)
-#     data_gen = SimilarityMatrix()
-#     type_noise = 'gaussian'
-#     data_gen.gen_matrix(n, type_matrix=type_matrix, apply_perm=True,
-#                         noise_ampl=ampl, law=type_noise)
-#     perm = data_gen.true_perm
-#     invperm = inverse_perm(perm)
-#     # plt.matshow(data_gen.sim_matrix[invperm, :][:, invperm])
-#     #
-#     reord_method = SpectralOrdering(dim=1, k_nbrs=10, circular=False,
-#                                     scaled=scaled,
-#                                     norm_laplacianlacian='random_walk',
-#                                     verb=1)
-#     this_perm = reord_method.fit_transform(data_gen.sim_matrix)
-#     score = evaluate_ordering(this_perm, data_gen.true_perm, circular=False)
-#     print("score: {}".format(score))
-#     plt.matshow(data_gen.sim_matrix[this_perm, :][:, this_perm])
-#
 
-    # save_res_dir = './experiment/temp'
-    # save_res_dir = '/home/thomas/Dropbox/RobustSeriationEmbeddingBiblio/\
-    #                 code_python/experiment'
-    # save_res_dir = './delete_this_directory_just_a_test/'
+    k_l = [5, 7, 10, 12, 15, 20, 30]
+    dim = 10
     # Run experiments
-    # run_synthetic_exps(n, k, dim_l, ampl_l, type_matrix_l, scaled,
-    #                   n_avrg=n_avrg, save_res_dir=save_res_dir)
-    # print("Done.")
-    #
-    # n = 500
-    # k = 10
-    # dim_l = [1, 3, 5, 7, 10, 15, 20]
-    # ampl_l = [0.0, 0.5, 1.0, 1.5, 2.0]
-    # ampl_l += [2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
-    # n_avrg = 100
-    # type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
-    #                  'CircularBanded', 'LinearBanded']
-    # scaled = True
-    # save_res_dir = "./"
-    # # Make the Figures from the paper
-    # for type_matrix in type_matrix_l:
-    #     fig_name = "kendall-tau-vs-noise-for-several-dims-typematrix_{}.pdf"\
-    #                "".format(type_matrix)
-    #     fig_name = save_res_dir + '/' + fig_name
-    #
-    #     plot_from_res(n, k, dim_l, ampl_l, type_matrix, scaled,
-    #                   norm_laplacian_l='random_walk', n_avrg=n_avrg,
-    #                   save_res_dir=save_res_dir,
-    #                   save_fig_path=fig_name)
+    run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
+                       n_avrg=n_avrg, save_res_dir=save_res_dir)
 
-    """
-     Notes :
-     A.R : j ai fait tourner les experiences avec les trois scalings differents
-     (scaled_l = [False, 'CTD', True]) et dim=20, k_nbrs=10 sur le cluster.
-     J ai egalement fait varier k_nbrs avec scale=True, dim=10, et
-     k_l= [5, 7, 10, 15, 20, 30].
-     Je met les resultats dans le dossier Dropbox des que possible (si j'y pense!)
-     Notes :
-     J'ai migré les scripts dans le fichier reproduce_figures.py
-    """
+    # Make the Figures from the paper
+    for type_matrix in type_matrix_l:
+        fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
+                   "".format(type_matrix)
+        fig_name = save_res_dir + fig_name
 
-    # k_l = [5, 7, 10, 12, 15, 20, 25]
-    # dim = 10
-    # # Run experiments
-    # run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
-    #                    n_avrg=n_avrg, save_res_dir=save_res_dir)
-    #
-    # # Make the Figures from the paper
-    # for type_matrix in type_matrix_l:
-    #     fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
-    #                "".format(type_matrix)
-    #     fig_name = save_res_dir + fig_name
-    #
-    #     plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
-    #                   norm_laplacian_l=None, n_avrg=n_avrg,
-    #                   save_res_dir=save_res_dir,
-    #                   save_fig_link=fig_name)
+        plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
+                      norm_laplacian_l=None, n_avrg=n_avrg,
+                      save_res_dir=save_res_dir,
+                      save_fig_link=fig_name)
