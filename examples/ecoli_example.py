@@ -38,7 +38,7 @@ n_reads = loader['shape'][0]
 positions = loader['pos']
 # Remove lowest overlap score values to clean things up
 # We set the threshold around the median
-ovlp_thr = np.percentile(vvs, 60)
+ovlp_thr = np.percentile(vvs, 50)
 over_thr = np.where(vvs > ovlp_thr)[0]
 sim_mat = coo_matrix((vvs[over_thr],
                      (iis[over_thr], jjs[over_thr])),
@@ -56,7 +56,7 @@ true_inv_perm = np.argsort(true_perm)
 
 # Set parameters for Spectral Ordering method
 scale_embedding = False
-k_nbrs = 15
+k_nbrs = 20
 circular = True
 eigen_solver = 'amg'  # faster than arpack on large sparse matrices.
 # requires pyamg package (conda install pyamg or pip install pyamg)
@@ -86,7 +86,7 @@ plt.title("3d embedding of DNA overlap based similarity matrix")
 # matrix generated from the embedding
 my_ords = reord_method.partial_orderings
 fig = plt.figure()
-for sub_ord in my_ords[:]:
+for sub_ord in my_ords:
     # plt.plot(np.sort(these_inv_perm[sub_ord]), these_pos[sub_ord], 'o')
     plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o')
     plt.title("ordering found in each conn. comp. of embedding-based"
