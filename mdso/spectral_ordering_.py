@@ -185,8 +185,7 @@ class SpectralOrdering():
             return self
         else:
             self.ordering = merge_conn_comp(self.partial_orderings, X,
-                                            self.embedding, h=self.k_nbrs,
-                                            mode=mode)
+                                            h=self.k_nbrs)
             self.ordering = np.array(self.ordering)
         return self
 
@@ -234,8 +233,9 @@ class SpectralOrdering():
                 self.ordering = ordering_algo.ordering_
                 self.new_embedding = ordering_algo.new_embedding_
             else:
-                warnings.warn("new similarity disconnected. Reordering"
-                              "connected components.")
+                warning_msg = "new similarity disconnected. Reordering"\
+                              " connected components."
+                warnings.warn(warning_msg)
                 # Create a baseline spectral seriation solver
                 # Set circular=False because if we have broken the circle
                 # in several pieces, we only have local linear orderings.
