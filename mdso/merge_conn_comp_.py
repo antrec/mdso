@@ -81,6 +81,15 @@ def merge_conn_comp(l_connected, sim, h=15):
         # Update matrix after merging i and j (i becomes the merged sequence)
         # There are four possible cases (i is first arrow, j is second arrow)
         # --> --> ; --> <-- ; <-- --> ; <-- <--
+        # Remove edges between i_cc and j_cc
+        these_i = [2*i_cc, 2*i_cc + 1]
+        these_j = [2*j_cc, 2*j_cc + 1]
+        for this_i in these_i:
+            for this_j in these_j:
+                a[this_i, this_j] = 0
+                a[this_j, this_i] = 0
+        # a[these_i, :][:, these_j] = 0
+        # a[these_j, :][:, these_i] = 0
         a_old = a.copy()
         if i_tip == 'begin':  # begin of new i becomes end of old i
             this_i = 2*i_cc + 1
@@ -104,4 +113,6 @@ def merge_conn_comp(l_connected, sim, h=15):
         # a = np.triu(a, k=1)
 
     l_out = [el for el in l_out if len(el) > 1]
+    if len(l_out) == 1:
+        l_out = l_out[0]
     return(l_out)

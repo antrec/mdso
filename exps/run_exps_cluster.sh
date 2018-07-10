@@ -10,14 +10,15 @@ cd /sequoia/data1/arecanat/RobustSeriationEmbedding/
 
 exp_dir="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/exps/results/"
 doScale=2
-kNeighbors=15
+dim=10
+# kNeighbors=15
 # for typeLapEmbed in random_walk unnormalized; do
   for typeLapFiedler in unnormalized random_walk; do
-    # for doScale in 0 1 2; do
-#       for kNeighbors in 10 15 20 30; do
-      for dim in 1 3 5 7 10 15 20; do
+    # for doScale in 0 1; do
+      for kNeighbors in 5 10 15 20 30; do
+      # for dim in 1 3 5 7 10 15 20; do
         for typeMatrix in LinearBanded LinearStrongDecrease CircularBanded CircularStrongDecrease; do
-          for amplNoise in 0.01 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0; do
+          for amplNoise in 0.1 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0; do
             COUNTERJOBS=`qstat -u arecanat | wc -l`
             echo "  job count : ${COUNTERJOBS}"
             while [ $COUNTERJOBS -ge $nb_node ]; do

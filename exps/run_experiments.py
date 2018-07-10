@@ -41,7 +41,8 @@ def run_one_exp(n, k, dim, ampl, type_matrix, n_avrg,
                                     norm_adjacency=norm_adjacency,
                                     norm_laplacian=norm_laplacian,
                                     scale_embedding=scale_embedding,
-                                    circular=circular)
+                                    circular=circular,
+                                    merge_if_ccs=True)
 
     # Initialize array of results
     scores = np.zeros(n_avrg)
@@ -273,6 +274,8 @@ def add_plot_exp(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
     plt.plot(x, means, marker=marker, lw=2, color=col, linestyle='dashed')
     plt.fill_between(x, means + 1./np.sqrt(n_avrg)*stds,
                      means-1./np.sqrt(n_avrg)*stds, facecolor=col, alpha=0.25)
+    # plt.fill_between(x, means + stds,
+    #                  means - stds, facecolor=col, alpha=0.25)
 
     return
 
@@ -423,13 +426,12 @@ def plot_from_res_gain(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
 if __name__ == '__main__':
 
     """
-    test check_args_for_plot
-    (n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l, norm_laplacian_l)
-
     """
+    # Plots from the main paper (Kendall-Tau scores for several noise amplitude
+    # and dimensions).
     n = 500
     k = 15
-    dim_l = [1, 3, 5, 7, 10, 15, 20]
+    dim_l = [1, 3, 5, 7, 10, 15]#, 20]
     ampl_l = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
     n_avrg = 100
     type_matrix_l = ['CircularStrongDecrease', 'LinearStrongDecrease',
@@ -456,19 +458,40 @@ if __name__ == '__main__':
                       save_res_dir=save_res_dir,
                       save_fig_path=fig_name)
 
-    # k_l = [5, 7, 10, 12, 15, 20, 30]
-    # dim = 10
-    # # Run experiments
-    # run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
-    #                    n_avrg=n_avrg, save_res_dir=save_res_dir)
-    #
-    # # Make the Figures from the paper
-    # for type_matrix in type_matrix_l:
-    #     fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
-    #                "".format(type_matrix)
-    #     fig_name = save_res_dir + fig_name
-    #
-    #     plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
-    #                   norm_laplacian_l=None, n_avrg=n_avrg,
-    #                   save_res_dir=save_res_dir,
-    #                   save_fig_link=fig_name)
+    # Supplementary plots : sensitivity to k_nbrs parameter.
+    k_l = [5, 10, 15, 20, 30]
+    dim = 10
+    scaled = 'heuristic'
+    # Run experiments
+    run_synthetic_exps(n, k_l, dim, ampl_l, type_matrix_l, scaled,
+                       n_avrg=n_avrg, save_res_dir=save_res_dir,
+                       norm_laplacian_l='random_walk')
+    # Make the Figures from the paper
+    for type_matrix in type_matrix_l:
+        fig_name = "kendall-tau-vs-noise-for-several-k_nns-typematrix_{}.pdf" \
+                   "".format(type_matrix)
+        fig_name = save_res_dir + fig_name
+
+        plot_from_res(n, k_l, dim, ampl_l, type_matrix, scaled,
+                      norm_laplacian_l='random_walk', n_avrg=n_avrg,
+                      save_res_dir=save_res_dir,
+                      save_fig_link=fig_name)
+
+    # Supplementary plots : sensitivity to the scaling of the embedding.
+    scaled_l = ['heuristic', 'CTD', False]
+    k = 15
+    dim = 10
+    # Run experiments
+    run_synthetic_exps(n, k, dim, ampl_l, type_matrix_l, scaled_l,
+                       n_avrg=n_avrg, save_res_dir=save_res_dir,
+                       norm_laplacian_l='random_walk')
+    # Make the Figures from the paper
+    for type_matrix in type_matrix_l:
+        fig_name = "kendall-tau-vs-noise-for-several-scalings-typematrix"\
+                   "_{}.pdf".format(type_matrix)
+        fig_name = save_res_dir + fig_name
+
+        plot_from_res(n, k, dim, ampl_l, type_matrix, scaled_l,
+                      norm_laplacian_l='random_walk', n_avrg=n_avrg,
+                      save_res_dir=save_res_dir,
+                      save_fig_link=fig_name)
