@@ -172,7 +172,8 @@ class SpectralOrdering():
         self.eigen_solver = eigen_solver
         self.circular = circular
 
-    def merge_connected_components(self, X, mode='similarity'):
+    def merge_connected_components(self, X, partial_orderings,
+                                   mode='similarity'):
         """
         If the new similarity matrix (computed from the Laplacian embedding)
         is disconnected, then the algorithm will only find partial orderings
@@ -180,95 +181,132 @@ class SpectralOrdering():
         This method merges the partial orderings into one by using the
         original (connected) similarity matrix, or the embedding itself.
         """
-        if not type(self.partial_orderings) == list:
+        if not type(partial_orderings) == list:
             raise TypeError("self.ordering should be a list (of lists)")
-        if not type(self.partial_orderings[0]) == list:
+        if not type(partial_orderings[0]) == list:
             return self
         else:
-            self.ordering = merge_conn_comp(self.partial_orderings, X,
-                                            h=self.k_nbrs)
-            self.ordering = np.array(self.ordering)
-        return self
+            ordering = merge_conn_comp(partial_orderings, X,
+                                       h=self.k_nbrs)
+            if not type(ordering[0] == list):
+                ordering = np.array(ordering)
+        return ordering
 
     def fit(self, X):
         """
         Creates a Laplacian embedding and a new similarity matrix
         """
 
-        if self.n_components == 1:
-            # If n_components == 1, just run the baseline spectral method
-            ordering_algo = SpectralBaseline(
-                circular=self.circular,
-                norm_adjacency=self.norm_adjacency,
-                eigen_solver=self.eigen_solver)
-            ordering_algo.fit(X)
-            self.ordering = ordering_algo.ordering_
-            return(self)
+        main_cc, nb_cc = get_conn_comps(X)
+        if nb_cc > 1:
+            warning_msg = "input similarity disconnected! Reordering"\
+                          " connected components."
+            warnings.warn(warning_msg)
+            self.ordering = []
+            self.partial_orderings = []
+            if issparse(X):
+                X = X.tolil()
 
-        else:
-            # Compute the Laplacian embedding
-            self.embedding = spectral_embedding(
-                X, n_components=self.n_components,
-                norm_laplacian=self.norm_laplacian,
-                norm_adjacency=self.norm_adjacency,
-                scale_embedding=self.scale_embedding,
-                eigen_solver=self.eigen_solver)
-
-            # Get the cleaned similarity matrix from the embedding
-            self.new_sim = gen_sim_from_embedding(
-                self.embedding, k_nbrs=self.k_nbrs,
-                norm_by_max=self.new_sim_norm_by_max,
-                norm_by_count=self.new_sim_norm_by_count,
-                type_simil=self.new_sim_type)
-
-        # Get the latent ordering from the cleaned similarity matrix
-        if not self.preprocess_only:
-            # Make sure we have only one connected component in new_sim
-            ccs, n_c = get_conn_comps(self.new_sim)
-            if n_c == 1:
-                # Create a baseline spectral seriation solver
-                ordering_algo = SpectralBaseline(
-                    circular=self.circular, norm_adjacency=self.norm_adjacency,
-                    eigen_solver=self.eigen_solver)
-                ordering_algo.fit(self.new_sim)
-                self.ordering = ordering_algo.ordering_
-                self.new_embedding = ordering_algo.new_embedding_
+        for cc in main_cc:
+            if nb_cc == 1:
+                this_X = X
             else:
-                warning_msg = "new similarity disconnected. Reordering"\
-                              " connected components."
-                warnings.warn(warning_msg)
-                # Create a baseline spectral seriation solver
-                # Set circular=False because if we have broken the circle
-                # in several pieces, we only have local linear orderings.
+                this_X = X[cc, :]
+                this_X = this_X.T[cc, :].T
+
+            if self.n_components == 1:
+                # If n_components == 1, just run the baseline spectral method
                 ordering_algo = SpectralBaseline(
-                    circular=False, norm_adjacency=self.norm_adjacency,
+                    circular=self.circular,
+                    norm_adjacency=self.norm_adjacency,
+                    eigen_solver=self.eigen_solver)
+                ordering_algo.fit(this_X)
+                this_ordering = ordering_algo.ordering_
+                # self.ordering = ordering_algo.ordering_
+                # return(self)
+
+            else:
+                # Compute the Laplacian embedding
+                self.embedding = spectral_embedding(
+                    this_X, n_components=self.n_components,
+                    norm_laplacian=self.norm_laplacian,
+                    norm_adjacency=self.norm_adjacency,
+                    scale_embedding=self.scale_embedding,
                     eigen_solver=self.eigen_solver)
 
-                self.partial_orderings = []
-                # Convert sparse matrix to lil format for slicing
-                if issparse(X):
-                    self.new_sim = self.new_sim.tolil()
+                # Get the cleaned similarity matrix from the embedding
+                self.new_sim = gen_sim_from_embedding(
+                    self.embedding, k_nbrs=self.k_nbrs,
+                    norm_by_max=self.new_sim_norm_by_max,
+                    norm_by_count=self.new_sim_norm_by_count,
+                    type_simil=self.new_sim_type)
+
+            # Get the latent ordering from the cleaned similarity matrix
+            if not self.preprocess_only:
+                # Make sure we have only one connected component in new_sim
+                ccs, n_c = get_conn_comps(self.new_sim)
+                if n_c == 1:
+                    # Create a baseline spectral seriation solver
+                    ordering_algo = SpectralBaseline(
+                        circular=self.circular,
+                        norm_adjacency=self.norm_adjacency,
+                        eigen_solver=self.eigen_solver)
+                    ordering_algo.fit(self.new_sim)
+                    this_ordering = ordering_algo.ordering_
+                    # self.ordering = ordering_algo.ordering_
+                    self.new_embedding = ordering_algo.new_embedding_
                 else:
-                    self.new_sim = self.new_sim.toarray()
-                for cc_idx, in_cc in enumerate(ccs):
-                    if len(in_cc) < self.min_cc_len:
-                        break
-                    # Change the eigen_solver depending on size and sparsity
-                    if issparse(X) and len(in_cc) > 5000:
-                        ordering_algo.eigen_solver = 'amg'
+                    warning_msg = "new similarity disconnected. Reordering"\
+                                  " connected components."
+                    warnings.warn(warning_msg)
+                    # Create a baseline spectral seriation solver
+                    # Set circular=False because if we have broken the circle
+                    # in several pieces, we only have local linear orderings.
+                    ordering_algo = SpectralBaseline(
+                        circular=False, norm_adjacency=self.norm_adjacency,
+                        eigen_solver=self.eigen_solver)
+
+                    partial_orderings = []
+                    # Convert sparse matrix to lil format for slicing
+                    if issparse(this_X):
+                        self.new_sim = self.new_sim.tolil()
                     else:
-                        ordering_algo.eigen_solver = 'arpack'
-                    ordering_algo.fit(self.new_sim[in_cc, :][:, in_cc])
-                    self.partial_orderings.append(
-                        in_cc[ordering_algo.ordering_])
+                        self.new_sim = self.new_sim.toarray()
+                    for cc_idx, in_cc in enumerate(ccs):
+                        if len(in_cc) < self.min_cc_len:
+                            break
+                        # Change eigen_solver depending on size and sparsity
+                        if issparse(this_X) and len(in_cc) > 5000:
+                            ordering_algo.eigen_solver = 'amg'
+                        else:
+                            ordering_algo.eigen_solver = 'arpack'
+                        this_sim = self.new_sim[in_cc, :]
+                        this_sim = this_sim.T[in_cc, :].T
+                        ordering_algo.fit(this_sim)
+                        partial_orderings.append(
+                            in_cc[ordering_algo.ordering_])
 
-                self.partial_orderings = [list(
-                    partial_order) for partial_order in self.partial_orderings]
+                    partial_orderings = [list(
+                        partial_order) for partial_order in partial_orderings]
 
-                if self.merge_if_ccs:
-                    self.merge_connected_components(X)
+                    if self.merge_if_ccs:
+                        this_ordering = self.merge_connected_components(
+                            this_X, partial_orderings)
+                    else:
+                        this_ordering = partial_orderings
+                        # self.ordering = self.partial_orderings
+
+                if nb_cc == 1:
+                    self.ordering = this_ordering
+                    if n_c > 1:
+                        self.partial_orderings = partial_orderings
                 else:
-                    self.ordering = self.partial_orderings
+                    this_ordering = [cc[sub_ord] for sub_ord in this_ordering]
+                    self.ordering.append(this_ordering)
+                    if n_c > 1:
+                        partial_orderings = [cc[sub_ord] for sub_ord in
+                                             partial_orderings]
+                        self.partial_orderings.append(partial_orderings)
 
         return self
 
