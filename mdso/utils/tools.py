@@ -127,7 +127,7 @@ def check_similarity(arr, normalize=False):
             return(np.array(arr))
 
 
-def get_conn_comps(mat, min_cc_len=1):
+def get_conn_comps(mat, min_cc_len=1, return_n_cc=True):
     """
     Returns a list of connected components of the matrix mat by decreasing size
     of the connected components, for all cc of size larger or equal than
@@ -146,4 +146,7 @@ def get_conn_comps(mat, min_cc_len=1):
         if len_ccs[i] < min_cc_len:
             break
         ccs_l.append(np.where(lbls == cc_idx)[0])
-    return ccs_l, n_c
+    if return_n_cc:
+        return ccs_l, n_c
+    else:
+        return ccs_l

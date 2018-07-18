@@ -119,6 +119,7 @@ class SpectralOrdering():
         W = Dinv @ W @ Dinv, to account for non uniform sampling of points on
         a 1d manifold (from Lafon and Coifman's approximation of the Laplace
         Beltrami operator)
+        Otherwise, leave the adjacency matrix as it is.
         TODO : also implement the 'sinkorn' normalization
 
     scaled : string or boolean, default True

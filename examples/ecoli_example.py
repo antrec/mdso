@@ -79,7 +79,12 @@ fig = plt.figure()
 ax = Axes3D(fig)
 ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
            c=true_inv_perm)
-plt.title("3d embedding of DNA overlap based similarity matrix")
+# plt.title("3d embedding of DNA overlap based similarity matrix")
+ax.set_xlabel(r'$f_1$', fontsize=18)
+ax.set_ylabel(r'$f_2$', fontsize=18)
+ax.set_zlabel(r'$f_3$', fontsize=18)
+save_fig_path = 'ecoli_3d_embedding.png'
+plt.savefig(save_fig_path, bbox_inches='tight', dpi=200, transparent=True)
 # plt.show()
 
 # Plot the ordering found in each connected component of the new similarity
@@ -88,9 +93,13 @@ my_ords = reord_method.partial_orderings
 fig = plt.figure()
 for sub_ord in my_ords:
     # plt.plot(np.sort(these_inv_perm[sub_ord]), these_pos[sub_ord], 'o')
-    plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o')
-    plt.title("ordering found in each conn. comp. of embedding-based"
-              "similarity")
+    plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o', mfc='none')
+    # plt.title("ordering found in each conn. comp. of embedding-based"
+    #           "similarity")
+plt.xlabel('partial orderings', fontsize=18)
+plt.ylabel('true position on genome', fontsize=18)
+save_fig_path = 'ecoli_partial_orderings.pdf'
+plt.savefig(save_fig_path, bbox_inches='tight', transparent=True)
 # plt.show()
 
 # The method merge_conn_comp uses the input matrix new_mat to merge the
@@ -102,7 +111,7 @@ my_ords = list(reord_method.ordering)
 if type(my_ords[0]) == list:  # then we have several contigs
     fig = plt.figure()
     for sub_ord in my_ords:
-        plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o')
+        plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o', mfc='none')
         plt.title("ordering found by merging conn. comp. of embedding-based"
                   "similarity with the thresholded overlap-based similarity")
     # plt.show()
@@ -117,8 +126,12 @@ sub_raw_mat = sub_raw_mat.T[sub_idxs, :].T
 newperm = merge_conn_comp(reord_method.partial_orderings, sub_raw_mat,
                           h=k_nbrs)
 fig = plt.figure()
-plt.plot(np.sort(true_inv_perm[newperm]), sub_pos[newperm], 'o')
-plt.title("ordering found by merging conn. comp. of embedding-based"
-          "similarity with the raw overlap-based similarity")
+plt.plot(np.sort(true_inv_perm[newperm]), sub_pos[newperm], 'o', mfc='none')
+# plt.title("ordering found by merging conn. comp. of embedding-based"
+#           "similarity with the raw overlap-based similarity")
+plt.xlabel('ordering', fontsize=18)
+plt.ylabel('true position on genome', fontsize=18)
+save_fig_path = 'ecoli_total_orderings.pdf'
+plt.savefig(save_fig_path, bbox_inches='tight', transparent=True)
 
-plt.show()
+# plt.show()

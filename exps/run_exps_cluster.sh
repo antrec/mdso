@@ -3,19 +3,20 @@ export SGE_ROOT=/cm/shared/apps/sge/2011.11p1;
 COUNTERJOBS=`/cm/shared/apps/sge/2011.11p1/bin/linux-x64/qstat -u arecanat | wc -l`
 memory=3500M
 vmemory=3800M
-nb_node=22
+nb_node=32
 
 pythonfile="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/exps/parse_args_run_one_exp.py"
 cd /sequoia/data1/arecanat/RobustSeriationEmbedding/
 
 exp_dir="/sequoia/data1/arecanat/RobustSeriationEmbedding/mdso/exps/results/"
-doScale=2
-dim=10
-# kNeighbors=15
+# doScale=2
+dim=20
+kNeighbors=15
+# typeLapFiedler='random_walk'
 # for typeLapEmbed in random_walk unnormalized; do
-  for typeLapFiedler in unnormalized random_walk; do
-    # for doScale in 0 1; do
-      for kNeighbors in 5 10 15 20 30; do
+  for typeLapFiedler in random_walk; do
+    for doScale in 0 1 2; do
+      # for kNeighbors in 50; do # 10 15 20 30; do
       # for dim in 1 3 5 7 10 15 20; do
         for typeMatrix in LinearBanded LinearStrongDecrease CircularBanded CircularStrongDecrease; do
           for amplNoise in 0.1 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0; do

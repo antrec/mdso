@@ -17,6 +17,8 @@
 
 # Experiments results
 /exps/results/
+*.pdf
+*.png
 
 # My TODO list
 TODO.md
