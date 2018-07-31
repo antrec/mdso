@@ -10,7 +10,7 @@ Specifically, we compute a multi-dimensional Laplacian embedding, and use it to 
 We then apply the usual spectral method on this new similarity matrix, resulting in improved robustness to noise in the raw similarity.
 
 ## Installation with pip
-The code is written in python3.7.
+The code is written in python3.6.
 The package can be installed from source with the following lines
 ```sh
 git clone https://github.com/antrec/mdso.git
