@@ -93,7 +93,8 @@ my_ords = reord_method.partial_orderings
 fig = plt.figure()
 for sub_ord in my_ords:
     # plt.plot(np.sort(these_inv_perm[sub_ord]), these_pos[sub_ord], 'o')
-    plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o', mfc='none')
+    plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o',
+             mfc='none')
     # plt.title("ordering found in each conn. comp. of embedding-based"
     #           "similarity")
 plt.xlabel('partial orderings', fontsize=18)
@@ -111,7 +112,8 @@ my_ords = list(reord_method.ordering)
 if type(my_ords[0]) == list:  # then we have several contigs
     fig = plt.figure()
     for sub_ord in my_ords:
-        plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o', mfc='none')
+        plt.plot(np.sort(true_inv_perm[sub_ord]), sub_pos[sub_ord], 'o',
+                 mfc='none')
         plt.title("ordering found by merging conn. comp. of embedding-based"
                   "similarity with the thresholded overlap-based similarity")
     # plt.show()

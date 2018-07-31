@@ -74,6 +74,12 @@ class SpectralBaseline():
         /!\ X must be connected.
 
         """
+
+        n_ = X.shape[0]
+        if n_ < 3:
+            self.ordering_ = np.arange(n_)
+            return self
+
         (n_cc, _) = connected_components(X)
         if n_cc > 1:
             raise ValueError("The input matrix is not connected")
@@ -197,6 +203,11 @@ class SpectralOrdering():
         Creates a Laplacian embedding and a new similarity matrix
         """
 
+        n_ = X.shape[0]
+        if n_ < 3:
+            self.ordering = np.arange(n_)
+            return self
+
         main_cc, nb_cc = get_conn_comps(X)
         if nb_cc > 1:
             warning_msg = "input similarity disconnected! Reordering"\
@@ -208,9 +219,16 @@ class SpectralOrdering():
                 X = X.tolil()
 
         for cc in main_cc:
+            n_sub = len(cc)
             if nb_cc == 1:
                 this_X = X
             else:
+                # do not try to reorder if single or pair of elements
+                if n_sub < 3:
+                    this_ordering = [cc]
+                    self.ordering.append(this_ordering)
+
+                # Restrict to connected component
                 this_X = X[cc, :]
                 this_X = this_X.T[cc, :].T
 
@@ -235,8 +253,9 @@ class SpectralOrdering():
                     eigen_solver=self.eigen_solver)
 
                 # Get the cleaned similarity matrix from the embedding
+                k_ = min(n_sub, self.k_nbrs)
                 self.new_sim = gen_sim_from_embedding(
-                    self.embedding, k_nbrs=self.k_nbrs,
+                    self.embedding, k_nbrs=k_,
                     norm_by_max=self.new_sim_norm_by_max,
                     norm_by_count=self.new_sim_norm_by_count,
                     type_simil=self.new_sim_type)
