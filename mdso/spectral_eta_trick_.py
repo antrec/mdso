@@ -17,7 +17,7 @@ from .utils import compute_score
 from .spectral_ordering_ import SpectralBaseline
 
 
-def plot_mat(X, title='', permut=None):
+def plot_mat(X, title='', permut=None, true_pos=None):
     """
     Plot the permuted matrix X.
     Used to visualize the behavior of the iterates of
@@ -26,9 +26,15 @@ def plot_mat(X, title='', permut=None):
 
     if permut is not None:
         if issparse(X):
-            (iis, jjs, _) = find(X)
-            pis = permut[iis]
-            pjs = permut[jjs]
+            # (iis, jjs, _) = find(X)
+            # pis = permut[iis]
+            # pjs = permut[jjs]
+
+            Xl = X.copy().tocsr()
+            Xl = Xl[permut, :]
+            Xl = Xl.T[permut, :].T
+            (pis, pjs, _) = find(Xl)
+
         else:
             Xl = X.copy()
             Xl = Xl[permut, :]
@@ -44,7 +50,12 @@ def plot_mat(X, title='', permut=None):
     else:
         axes[0].matshow(Xl, interpolation='nearest')
     if permut is not None:
-        axes[1].plot(np.arange(len(permut)), permut, 'o', mfc='none')
+        if true_pos is None:
+            axes[1].plot(np.arange(len(permut)), permut, 'o', mfc='none')
+        else:
+            true_perm = np.argsort(true_pos)
+            true_inv_perm = np.argsort(true_perm)
+            axes[1].plot(np.sort(true_inv_perm[permut]), true_pos[permut], 'o', mfc='none')
     plt.title(title)
     plt.draw()
     plt.pause(0.01)
@@ -56,7 +67,8 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
                        do_plot=False, circular=False, norm_laplacian=None,
                        norm_adjacency=None, eigen_solver=None,
                        scale_embedding=False,
-                       add_momentum=None):
+                       add_momentum=None,
+                       true_pos=None):
     """
     Performs Spectral Eta-trick Algorithm from
     https://arxiv.org/pdf/1806.00664.pdf
@@ -93,13 +105,14 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
                 eta_old = eta_vec
 
             new_perm = spectral_algo.fit_transform(X_w)
+            # new_perm = np.argsort(new_perm)
 
             if np.all(new_perm == best_perm):  # stopping criterion
                 break
 
-            if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
-                new_perm *= -1
-                new_perm += (n-1)
+            # if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
+            #     new_perm *= -1
+            #     new_perm += (n-1)
 
             new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm)
             if new_score < best_score:
@@ -119,7 +132,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
 
             if do_plot:
                 title = "it %d, score: %1.5e" % (it, new_score)
-                plot_mat(X, permut=new_perm, title=title)
+                plot_mat(X, permut=new_perm, title=title, true_pos=true_pos)
 
     else:
         eta_mat = np.ones((n, n))
@@ -166,7 +179,8 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
                         norm_adjacency=None, eigen_solver=None,
                         scale_embedding=False,
                         add_momentum=None,
-                        avg_dim=1, avg_scaling=True):
+                        avg_dim=1, avg_scaling=True,
+                        true_pos=None):
     """
 
     THIS IS A MODIFIED EXPERIMENTAL VERSION OF THE ABOVE spectral_eta_trick FUNCTION.
@@ -329,7 +343,7 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
 
             if do_plot:
                 title = "it %d, score: %1.5e" % (it, new_score)
-                plot_mat(X, permut=new_perm, title=title)
+                plot_mat(X, permut=new_perm, title=title, true_pos=true_pos)
 
     else:
         eta_mat = np.ones((n, n))
@@ -403,13 +417,19 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
 class SpectralEtaTrick():
 
     def __init__(self, n_iter=20, dh=1, return_score=False, circular=False,
-                 norm_adjacency=None, eigen_solver=None):
+                 norm_adjacency=None, eigen_solver=None, add_momentum=None,
+                 do_plot=False, score_function='R2S',
+                 true_pos=None):
         self.n_iter = n_iter
         self.dh = dh
         self.return_score = return_score
         self.circular = circular
         self.norm_adjacency = norm_adjacency
         self.eigen_solver = eigen_solver
+        self.add_momentum = add_momentum
+        self.score_function = score_function
+        self.do_plot = do_plot
+        self.true_pos = true_pos
 
     def fit(self, X):
 
@@ -417,7 +437,11 @@ class SpectralEtaTrick():
                                        return_score=self.return_score,
                                        circular=self.circular,
                                        norm_adjacency=self.norm_adjacency,
-                                       eigen_solver=self.eigen_solver)
+                                       eigen_solver=self.eigen_solver,
+                                       add_momentum=self.add_momentum,
+                                       score_function=self.score_function,
+                                       do_plot=self.do_plot,
+                                       true_pos=self.true_pos)
 
         self.ordering = ordering_
 

@@ -76,7 +76,7 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             if circular:
                 is_in_band += (d2diag >= n - dh)
             in_band = np.where(is_in_band)[0]
-            out_band = np.where(not is_in_band)[0]
+            out_band = np.where(~is_in_band)[0]
             d2diag[in_band] **= 2
             d2diag[out_band] *= 2 * dh
             d2diag[out_band] -= dh**2
@@ -85,7 +85,7 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             if circular:
                 is_in_band += (d2diag >= n - dh)
             in_band = np.where(is_in_band)[0]
-            out_band = np.where(not is_in_band)[0]
+            out_band = np.where(~is_in_band)[0]
             d2diag[in_band] **= 2
             d2diag[out_band] = dh**2
 
@@ -108,7 +108,7 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             if circular:
                 is_in_band += (d2diagv >= n - dh)
             in_band = np.where(is_in_band)[0]
-            out_band = np.where(not is_in_band)[0]
+            out_band = np.where(~is_in_band)[0]
             d2diagv[in_band] **= 2
             d2diagv[out_band] *= 2 * dh
             d2diagv[out_band] -= dh**2
@@ -117,7 +117,7 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             if circular:
                 is_in_band += (d2diagv >= n - dh)
             in_band = np.where(is_in_band)[0]
-            out_band = np.where(not is_in_band)[0]
+            out_band = np.where(~is_in_band)[0]
             d2diagv[in_band] **= 2
             d2diagv[out_band] = dh**2
 
