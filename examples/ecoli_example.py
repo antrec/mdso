@@ -137,3 +137,13 @@ save_fig_path = 'ecoli_total_orderings.pdf'
 plt.savefig(save_fig_path, bbox_inches='tight', transparent=True)
 
 # plt.show()
+
+# true_perm = np.argsort(positions)
+# true_inv_perm = np.argsort(true_perm)
+# fig = plt.figure()
+# ovlp_thr = np.percentile(vvs, 0)
+# over_thr = np.where(vvs > ovlp_thr)[0]
+# plt.scatter(true_inv_perm[iis[over_thr]], true_inv_perm[jjs[over_thr]], marker='o', s=30,
+#             facecolors='none', edgecolors='k')
+# save_fig_path = '/Users/antlaplante/THESE/manuscript/thesis/figs/spectrassembler_figs/oxford_test0_spy_00.png'
+# plt.savefig(save_fig_path, bbox_inches='tight', transparent=True, dpi=150)

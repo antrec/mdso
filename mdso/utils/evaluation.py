@@ -5,6 +5,8 @@ Evaluate the permutation given a ground truth
 '''
 import numpy as np
 from scipy.stats import kendalltau
+from scipy.sparse import issparse, coo_matrix
+from scipy.linalg import toeplitz
 
 
 def kendall_circular(true_perm, order_perm):
@@ -45,3 +47,82 @@ def evaluate_ordering(perm, true_perm, criterion='kendall',
         else:
             score = abs(kendalltau(true_perm, np.argsort(perm))[0])
         return(score)
+
+
+def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
+    """ computes the p-sum score of X or X[perm, :][:, perm] if permutation
+    provided
+    """
+
+    (n, _) = X.shape
+    if issparse(X):
+        if not isinstance(X, coo_matrix):
+            X = coo_matrix(X)
+
+        r, c, v = X.row, X.col, X.data
+
+        if perm is not None:
+            d2diag = abs(perm[r] - perm[c])
+        else:
+            d2diag = abs(r - c)
+
+        if not isinstance(dh, int):
+            dh = int(dh)
+
+        if score_function == '2SUM':
+            d2diag **= 2
+        elif score_function == 'Huber':
+            is_in_band = (d2diag <= dh)
+            if circular:
+                is_in_band += (d2diag >= n - dh)
+            in_band = np.where(is_in_band)[0]
+            out_band = np.where(not is_in_band)[0]
+            d2diag[in_band] **= 2
+            d2diag[out_band] *= 2 * dh
+            d2diag[out_band] -= dh**2
+        elif score_function == 'R2S':
+            is_in_band = (d2diag <= dh)
+            if circular:
+                is_in_band += (d2diag >= n - dh)
+            in_band = np.where(is_in_band)[0]
+            out_band = np.where(not is_in_band)[0]
+            d2diag[in_band] **= 2
+            d2diag[out_band] = dh**2
+
+        prod = np.multiply(v, d2diag)
+        score = np.sum(prod)
+
+    else:
+        if perm is not None:
+            X_p = X.copy()[perm, :]
+            X_p = X_p.T[perm, :].T
+        else:
+            X_p = X
+
+        n = X_p.shape[0]
+        d2diagv = np.arange(n)
+        if score_function == '2SUM':
+            d2diagv **= 2
+        elif score_function == 'Huber':
+            is_in_band = (d2diagv <= dh)
+            if circular:
+                is_in_band += (d2diagv >= n - dh)
+            in_band = np.where(is_in_band)[0]
+            out_band = np.where(not is_in_band)[0]
+            d2diagv[in_band] **= 2
+            d2diagv[out_band] *= 2 * dh
+            d2diagv[out_band] -= dh**2
+        elif score_function == 'R2S':
+            is_in_band = (d2diagv <= dh)
+            if circular:
+                is_in_band += (d2diagv >= n - dh)
+            in_band = np.where(is_in_band)[0]
+            out_band = np.where(not is_in_band)[0]
+            d2diagv[in_band] **= 2
+            d2diagv[out_band] = dh**2
+
+        D2diag_mat = toeplitz(d2diagv)
+        prod = np.multiply(X_p, D2diag_mat)
+        score = np.sum(prod)
+
+    return score

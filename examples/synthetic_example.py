@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # Set parameters for data generation
 n = 500  # size of matrix
 type_noise = 'gaussian'  # distribution of the values of the noise
-ampl_noise = 1  # amplitude of the noise
+ampl_noise = 3  # amplitude of the noise
 type_similarity = 'CircularStrongDecrease'  # type of synthetic similarity matrix
 # ("Linear" [vs "Circular"], "Banded" [vs "StrongDecrease"])
 apply_perm = True  # randomly permute the matrix, so that the ground truth is
@@ -67,3 +67,26 @@ axes[1, 1].scatter(np.arange(data_gen.n),
                    data_gen.true_perm[reord_method.ordering])
 axes[1, 1].set_title("perm vs ground truth")
 plt.show()
+
+
+
+fig = plt.figure(); plt.scatter(reord_method.embedding[:, 0], reord_method.embedding[:, 1],
+c=data_gen.true_perm);
+plt.xlabel('f_1', fontsize=16);
+plt.ylabel('f_2', fontsize=16);
+plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, labelleft=False, left=False); 
+
+figpath='/Users/antlaplante/THESE/manuscript/thesis/figs/reconstructing_by_spectral_figs/embedding_noisy_circular_ampl_3.pdf'
+plt.savefig(figpath, bbox_inches='tight', transparent=True, dpi=150)
+
+reord_method2 = SpectralOrdering(n_components=n_components, k_nbrs=k_nbrs,
+                                circular=circular, scale_embedding=scaled,
+                                norm_laplacian=None)
+reord_method2.fit(reord_method.new_sim)
+fig = plt.figure(); plt.scatter(reord_method2.embedding[:, 0], reord_method2.embedding[:, 1],
+c=data_gen.true_perm);
+plt.xlabel('f_1', fontsize=16);
+plt.ylabel('f_2', fontsize=16);
+plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, labelleft=False, left=False); 
+figpath='/Users/antlaplante/THESE/manuscript/thesis/figs/reconstructing_by_spectral_figs/embedding_cleaned_circular_ampl_3.pdf'
+plt.savefig(figpath, bbox_inches='tight', transparent=True, dpi=150)
