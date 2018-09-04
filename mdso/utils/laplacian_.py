@@ -115,6 +115,7 @@ def _laplacian_sparse(graph, normed=False, axis=0):
         m = graph
         needs_copy = True
     w = m.sum(axis=axis).getA1() - m.diagonal()
+    # w = w + (1e-10) * np.ones(len(w))  # A.R : TEST IF THIS ADDS STABILITY TO PYAMG 
     if normed:
         if normed == 'random_walk':
             m = m.tocoo(copy=needs_copy)

@@ -62,7 +62,9 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
         r, c, v = X.row, X.col, X.data
 
         if perm is not None:
-            d2diag = abs(perm[r] - perm[c])
+            invp = np.argsort(perm)
+            d2diag = abs(invp[r] - invp[c])
+            # d2diag = abs(perm[r] - perm[c])
         else:
             d2diag = abs(r - c)
 

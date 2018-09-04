@@ -26,15 +26,17 @@ def plot_mat(X, title='', permut=None, true_pos=None):
 
     if permut is not None:
         if issparse(X):
-            # (iis, jjs, _) = find(X)
+            (iis, jjs, _) = find(X)
+            invp = np.argsort(permut)
+            pis = invp[iis]
+            pjs = invp[jjs]
             # pis = permut[iis]
             # pjs = permut[jjs]
 
-            Xl = X.copy().tocsr()
-            Xl = Xl[permut, :]
-            Xl = Xl.T[permut, :].T
-            (pis, pjs, _) = find(Xl)
-
+            # Xl = X.copy().tocsr()
+            # Xl = Xl[permut, :]
+            # Xl = Xl.T[permut, :].T
+            # (pis, pjs, _) = find(Xl)
         else:
             Xl = X.copy()
             Xl = Xl[permut, :]
@@ -87,7 +89,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
                                      scale_embedding=scale_embedding)
 
     best_perm = np.random.permutation(n)
-    best_score = compute_score(X, score_function=score_function, dh=dh, perm=best_perm)
+    best_score = compute_score(X, score_function=score_function, dh=dh, perm=best_perm, circular=circular)
 
     if issparse(X):
         if not isinstance(X, coo_matrix):
@@ -110,17 +112,22 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
             if np.all(new_perm == best_perm):  # stopping criterion
                 break
 
-            # if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
-            #     new_perm *= -1
-            #     new_perm += (n-1)
+            p_inv = np.argsort(new_perm)
+            if p_inv[0] > p_inv[-1]:  # convention to avoid alternating between one permutation and its flipped version
+                p_inv = (n-1) - p_inv
+                new_perm = np.argsort(p_inv)
 
-            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm)
+            # if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
+            #     new_perm = (n-1) - new_perm
+            #     # new_perm *= -1
+            #     # new_perm += (n-1)
+
+            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm, circular=circular)
             if new_score < best_score:
                 best_perm = new_perm  # keep best permutation so far
 
-            p_inv = np.argsort(new_perm)
-
             eta_vec = abs(p_inv[r] - p_inv[c])
+            # eta_vec **= 2  # !!!! THIS IS JUST A TEST FOR ROBUST 2 SUM !!!
 
             if circular:
                 eta_vec = np.minimum(eta_vec, n - eta_vec)
@@ -150,7 +157,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
             if np.all(new_perm == best_perm):  # stopping criterion
                 break
 
-            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm)
+            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm, circular=circular)
             if new_score < best_score:
                 best_perm = new_perm  # keep best permutation so far
 
@@ -174,12 +181,12 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
         return(best_perm)
 
 
-def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score=False,
+def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='1SUM', return_score=False,
                         do_plot=False, circular=False, norm_laplacian=None,
                         norm_adjacency=None, eigen_solver=None,
                         scale_embedding=False,
                         add_momentum=None,
-                        avg_dim=1, avg_scaling=True,
+                        avg_dim=3, avg_scaling=False,
                         true_pos=None):
     """
 
@@ -289,6 +296,7 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
         for it in range(n_iter):
 
             X_w = X.copy()
+            # eta_vec = np.ones(len(v))
             X_w.data /= eta_vec
 
             default_dim = 8
@@ -306,10 +314,10 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
             # new_perm = spectral_algo.fit_transform(X_w)
             if np.all(new_perm == best_perm):
                 break
-            if new_perm[0] > new_perm[-1]:
-                embedding = embedding[::-1, :]
-                new_perm *= -1
-                new_perm += (n-1)
+            # if new_perm[0] > new_perm[-1]:
+            #     embedding = embedding[::-1, :]
+            #     new_perm *= -1
+            #     new_perm += (n-1)
 
             new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm)
             if new_score < best_score:
@@ -318,8 +326,10 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
             p_inv = np.argsort(new_perm)
 
             # eta_vec = abs(p_inv[r] - p_inv[c])
-            eta_vec = np.zeros(len(r))
+            eta_vec = np.zeros(len(r), dtype='float64')
             d_ = min(avg_dim, n-1)
+            # eta_vec = np.sum(abs(embedding[r, :d_] - embedding[c, :d_]), axis=1)
+
             for dim in range(d_):
                 # eta_mat = eta_mat + abs(np.tile(embedding[:, dim], n) - np.repeat(embedding[:, dim], n))
                 d_perm = np.argsort(embedding[:, dim])
@@ -331,18 +341,30 @@ def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='Huber', return_score
                 eta_add = np.maximum(dh, eta_add)
 
                 if avg_scaling:
-                    eta_add *= (1./(1 + dim))
+                    eta_add = eta_add * (1./(1 + dim))
 
                 eta_vec += eta_add
+                # eta_vec = eta_vec + eta_add
             #     eta_mat = eta_mat + abs(np.tile(d_perm, n) - np.repeat(d_perm, n))
             # eta_vec = np.sum(abs(embedding[r, :d_] - embedding[c, :d_]), axis=1)
             # if circular:
             #     # pass
             #     eta_vec = np.minimum(eta_vec, n - eta_vec)
-            # eta_vec = np.maximum(dh, eta_vec)
+
+            # pct = 50
+            # this_delta = 50*n**(-3/2)
+            # this_delta = 1.e-2
+            # pct = 100 * ( 500. / n)
+            # this_delta = np.percentile(eta_vec, pct)
+            # this_delta = 1./10 * eta_vec.max()
+            # eta_vec = np.maximum(this_delta, eta_vec)
+            # print(eta_vec.std())
+            # print(eta_vec.mean())
+            # print(eta_vec.max())
+            # eta_vec /= this_delta
 
             if do_plot:
-                title = "it %d, score: %1.5e" % (it, new_score)
+                title = "it %d, score: %1.5e, delta=%1.3e" % (it, new_score, 0)
                 plot_mat(X, permut=new_perm, title=title, true_pos=true_pos)
 
     else:
