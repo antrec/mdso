@@ -65,7 +65,8 @@ def plot_mat(X, title='', permut=None, true_pos=None):
     return
 
 
-def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=False,
+def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM',
+                       dh_score=None, return_score=False,
                        do_plot=False, circular=False, norm_laplacian=None,
                        norm_adjacency=None, eigen_solver=None,
                        scale_embedding=False,
@@ -82,6 +83,9 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
     (n, n2) = X.shape
     assert(n == n2)
 
+    if dh_score is None:
+        dh_score = dh
+
     spectral_algo = SpectralBaseline(circular=circular,
                                      norm_laplacian=norm_laplacian,
                                      norm_adjacency=norm_adjacency,
@@ -89,7 +93,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
                                      scale_embedding=scale_embedding)
 
     best_perm = np.random.permutation(n)
-    best_score = compute_score(X, score_function=score_function, dh=dh, perm=best_perm, circular=circular)
+    best_score = compute_score(X, score_function=score_function, dh=dh_score, perm=best_perm, circular=circular)
 
     if issparse(X):
         if not isinstance(X, coo_matrix):
@@ -122,7 +126,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
             #     # new_perm *= -1
             #     # new_perm += (n-1)
 
-            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm, circular=circular)
+            new_score = compute_score(X, score_function=score_function, dh=dh_score, perm=new_perm, circular=circular)
             if new_score < best_score:
                 best_perm = new_perm  # keep best permutation so far
 
@@ -157,7 +161,7 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM', return_score=F
             if np.all(new_perm == best_perm):  # stopping criterion
                 break
 
-            new_score = compute_score(X, score_function=score_function, dh=dh, perm=new_perm, circular=circular)
+            new_score = compute_score(X, score_function=score_function, dh=dh_score, perm=new_perm, circular=circular)
             if new_score < best_score:
                 best_perm = new_perm  # keep best permutation so far
 

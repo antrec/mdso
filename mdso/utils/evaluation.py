@@ -68,6 +68,9 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
         else:
             d2diag = abs(r - c)
 
+        if circular:
+            d2diag = np.minimum(d2diag, n - d2diag)
+
         if not isinstance(dh, int):
             dh = int(dh)
 
@@ -75,8 +78,8 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             d2diag **= 2
         elif score_function == 'Huber':
             is_in_band = (d2diag <= dh)
-            if circular:
-                is_in_band += (d2diag >= n - dh)
+            # if circular:
+            #     is_in_band += (d2diag >= n - dh)
             in_band = np.where(is_in_band)[0]
             out_band = np.where(~is_in_band)[0]
             d2diag[in_band] **= 2
@@ -84,8 +87,8 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             d2diag[out_band] -= dh**2
         elif score_function == 'R2S':
             is_in_band = (d2diag <= dh)
-            if circular:
-                is_in_band += (d2diag >= n - dh)
+            # if circular:
+            #     is_in_band += (d2diag >= n - dh)
             in_band = np.where(is_in_band)[0]
             out_band = np.where(~is_in_band)[0]
             d2diag[in_band] **= 2
@@ -103,12 +106,14 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
 
         n = X_p.shape[0]
         d2diagv = np.arange(n)
+        if circular:
+            d2diagv = np.minimum(d2diagv, n - d2diagv)
         if score_function == '2SUM':
             d2diagv **= 2
         elif score_function == 'Huber':
             is_in_band = (d2diagv <= dh)
-            if circular:
-                is_in_band += (d2diagv >= n - dh)
+            # if circular:
+            #     is_in_band += (d2diagv >= n - dh)
             in_band = np.where(is_in_band)[0]
             out_band = np.where(~is_in_band)[0]
             d2diagv[in_band] **= 2
@@ -116,8 +121,8 @@ def compute_score(X, score_function='1SUM', dh=1, perm=None, circular=False):
             d2diagv[out_band] -= dh**2
         elif score_function == 'R2S':
             is_in_band = (d2diagv <= dh)
-            if circular:
-                is_in_band += (d2diagv >= n - dh)
+            # if circular:
+            #     is_in_band += (d2diagv >= n - dh)
             in_band = np.where(is_in_band)[0]
             out_band = np.where(~is_in_band)[0]
             d2diagv[in_band] **= 2
