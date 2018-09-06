@@ -185,13 +185,14 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM',
         return(best_perm)
 
 
-def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='1SUM', return_score=False,
+def spectral_eta_trick2(X, n_iter=50, dh=1, score_function='1SUM',                                 return_score=False,
                         do_plot=False, circular=False, norm_laplacian=None,
                         norm_adjacency=None, eigen_solver=None,
                         scale_embedding=False,
                         add_momentum=None,
                         avg_dim=3, avg_scaling=False,
-                        true_pos=None):
+                        true_pos=None,
+                        dh_score=None):
     """
 
     THIS IS A MODIFIED EXPERIMENTAL VERSION OF THE ABOVE spectral_eta_trick FUNCTION.
@@ -445,7 +446,8 @@ class SpectralEtaTrick():
     def __init__(self, n_iter=20, dh=1, return_score=False, circular=False,
                  norm_adjacency=None, eigen_solver=None, add_momentum=None,
                  do_plot=False, score_function='R2S',
-                 true_pos=None):
+                 true_pos=None,
+                 dh_score=None):
         self.n_iter = n_iter
         self.dh = dh
         self.return_score = return_score
@@ -454,6 +456,7 @@ class SpectralEtaTrick():
         self.eigen_solver = eigen_solver
         self.add_momentum = add_momentum
         self.score_function = score_function
+        self.dh_score = dh_score
         self.do_plot = do_plot
         self.true_pos = true_pos
 
@@ -467,7 +470,8 @@ class SpectralEtaTrick():
                                        add_momentum=self.add_momentum,
                                        score_function=self.score_function,
                                        do_plot=self.do_plot,
-                                       true_pos=self.true_pos)
+                                       true_pos=self.true_pos,
+                                       dh_score=self.dh_score)
 
         self.ordering = ordering_
 
