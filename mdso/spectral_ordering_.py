@@ -13,6 +13,7 @@ from .spectral_embedding_ import spectral_embedding
 from .gen_sim_from_embedding_ import gen_sim_from_embedding
 from .utils import get_conn_comps
 from .merge_conn_comp_ import merge_conn_comp
+from .alternate_embedding_ import get_embedding  # in order to test embeddings from other methods than spectral
 
 
 def get_linear_ordering(new_embedding):
@@ -80,20 +81,39 @@ class SpectralBaseline():
             self.ordering_ = np.arange(n_)
             return self
 
-        (n_cc, _) = connected_components(X)
+        
+        main_cc, n_cc = get_conn_comps(X)
+        # (n_cc, _) = connected_components(X)
         if n_cc > 1:
-            raise ValueError("The input matrix is not connected")
-        # Get 1d or 2d Spectral embedding to retrieve the latent ordering
-        self.new_embedding_ = spectral_embedding(
-            X, norm_adjacency=self.norm_adjacency,
-            norm_laplacian=self.norm_laplacian,
-            eigen_solver=self.eigen_solver,
-            scale_embedding=self.scale_embedding)
+            warnings.warn("Disconnected input matrix in SpectralBaseline")
+            # raise ValueError("The input matrix is not connected")
+            all_sub_ords = np.zeros(0, dtype='int')
+            for cc in main_cc:
+                n_sub = len(cc)
+                if n_sub < 3:
+                    sub_ord = cc
+                else:
+                    X_sub = X[cc, :]
+                    X_sub = X_sub.T[cc, :].T
+                    sub_embedding = spectral_embedding(
+                        X_sub, norm_adjacency=self.norm_adjacency,norm_laplacian=self.norm_laplacian,eigen_solver=self.eigen_solver,scale_embedding=self.scale_embedding)
+                    sub_perm = get_linear_ordering(sub_embedding)
+                    sub_ord = cc[sub_perm]
+                all_sub_ords = np.append(all_sub_ords, sub_ord)
+            self.ordering_ = all_sub_ords
 
-        if self.circular:
-            self.ordering_ = get_circular_ordering(self.new_embedding_)
         else:
-            self.ordering_ = get_linear_ordering(self.new_embedding_)
+            # Get 1d or 2d Spectral embedding to retrieve the latent ordering
+            self.new_embedding_ = spectral_embedding(
+                X, norm_adjacency=self.norm_adjacency,
+                norm_laplacian=self.norm_laplacian,
+                eigen_solver=self.eigen_solver,
+                scale_embedding=self.scale_embedding)
+
+            if self.circular:
+                self.ordering_ = get_circular_ordering(self.new_embedding_)
+            else:
+                self.ordering_ = get_linear_ordering(self.new_embedding_)
 
         return self
 
@@ -162,7 +182,8 @@ class SpectralOrdering():
                  norm_laplacian='unnormalized', scale_embedding='heuristic',
                  new_sim_norm_by_count=False, new_sim_norm_by_max=True,
                  new_sim_type=None, preprocess_only=False, min_cc_len=1,
-                 merge_if_ccs=False, eigen_solver=None, circular=False):
+                 merge_if_ccs=False, eigen_solver=None, circular=False,
+                 embedding_method='spectral'):
 
         self.n_components = n_components
         self.k_nbrs = k_nbrs
@@ -177,6 +198,7 @@ class SpectralOrdering():
         self.merge_if_ccs = merge_if_ccs
         self.eigen_solver = eigen_solver
         self.circular = circular
+        self.embedding_method = embedding_method
 
     def merge_connected_components(self, X, partial_orderings,
                                    mode='similarity'):
@@ -245,12 +267,21 @@ class SpectralOrdering():
 
             else:
                 # Compute the Laplacian embedding
-                self.embedding = spectral_embedding(
-                    this_X, n_components=self.n_components,
-                    norm_laplacian=self.norm_laplacian,
-                    norm_adjacency=self.norm_adjacency,
-                    scale_embedding=self.scale_embedding,
-                    eigen_solver=self.eigen_solver)
+                if self.embedding_method == 'spectral':
+                    self.embedding = spectral_embedding(
+                        this_X, n_components=self.n_components,
+                        norm_laplacian=self.norm_laplacian,
+                        norm_adjacency=self.norm_adjacency,
+                        scale_embedding=self.scale_embedding,
+                        eigen_solver=self.eigen_solver)
+                else:
+                    self.embedding = get_embedding(
+                        this_X, n_components=self.n_components,
+                        norm_laplacian=self.norm_laplacian,
+                        norm_adjacency=self.norm_adjacency,
+                        scale_embedding=self.scale_embedding,
+                        eigen_solver=self.eigen_solver,
+                        method=self.embedding_method)
 
                 # Get the cleaned similarity matrix from the embedding
                 k_ = min(n_sub, self.k_nbrs)

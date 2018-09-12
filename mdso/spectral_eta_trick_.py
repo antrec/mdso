@@ -154,9 +154,14 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM',
 
             new_perm = spectral_algo.fit_transform(X_w)
 
-            if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
-                new_perm *= -1
-                new_perm += (n-1)
+            # if new_perm[0] > new_perm[-1]:  # convention to avoid alternating between one permutation and its flipped version
+            #     new_perm *= -1
+            #     new_perm += (n-1)
+
+            p_inv = np.argsort(new_perm)
+            if p_inv[0] > p_inv[-1]:  # convention to avoid alternating between one permutation and its flipped version
+                p_inv = (n-1) - p_inv
+                new_perm = np.argsort(p_inv)
 
             if np.all(new_perm == best_perm):  # stopping criterion
                 break
@@ -164,8 +169,6 @@ def spectral_eta_trick(X, n_iter=50, dh=1, score_function='1SUM',
             new_score = compute_score(X, score_function=score_function, dh=dh_score, perm=new_perm, circular=circular)
             if new_score < best_score:
                 best_perm = new_perm  # keep best permutation so far
-
-            p_inv = np.argsort(new_perm)
 
             eta_mat = abs(np.tile(p_inv, n) - np.repeat(p_inv, n))
 
@@ -445,7 +448,7 @@ class SpectralEtaTrick():
 
     def __init__(self, n_iter=20, dh=1, return_score=False, circular=False,
                  norm_adjacency=None, eigen_solver=None, add_momentum=None,
-                 do_plot=False, score_function='R2S',
+                 do_plot=False, score_function='1SUM',
                  true_pos=None,
                  dh_score=None):
         self.n_iter = n_iter
@@ -477,7 +480,7 @@ class SpectralEtaTrick():
 
         return self
 
-    def fit_predict(self, X):
+    def fit_transform(self, X):
 
         self.fit(X)
         return self.ordering
