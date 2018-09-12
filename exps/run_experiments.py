@@ -38,13 +38,22 @@ def run_one_exp(n, k, dim, ampl, type_matrix, n_avrg,
     # Create matrix generator
     data_gen = SimilarityMatrix()
     # Create spectral solver
-    reord_method = SpectralOrdering(n_components=dim, k_nbrs=k,
-                                    norm_adjacency=norm_adjacency,
-                                    norm_laplacian=norm_laplacian,
-                                    scale_embedding=scale_embedding,
-                                    circular=circular,
-                                    merge_if_ccs=True,
-                                    embedding_method=embedding_method)
+    if embedding_method == 'TSNE':
+        reord_method = SpectralOrdering(n_components=2, k_nbrs=k,
+                                        norm_adjacency=norm_adjacency,
+                                        norm_laplacian=norm_laplacian,
+                                        scale_embedding=scale_embedding,
+                                        circular=circular,
+                                        merge_if_ccs=True,
+                                        embedding_method=embedding_method)
+    else:
+        reord_method = SpectralOrdering(n_components=dim, k_nbrs=k,
+                                        norm_adjacency=norm_adjacency,
+                                        norm_laplacian=norm_laplacian,
+                                        scale_embedding=scale_embedding,
+                                        circular=circular,
+                                        merge_if_ccs=True,
+                                        embedding_method=embedding_method)
 
     # Initialize array of results
     scores = np.zeros(n_avrg)
