@@ -65,6 +65,10 @@ parser.add_argument("--type_noise",
                     help="type of noise ('uniform' or 'gaussian')",
                     type=str,
                     default='gaussian')
+parser.add_argument("-b", "--embedding",
+                    help="method for embedding",
+                    type=str,
+                    default='spectral')
 
 # Get arguments
 args = parser.parse_args()
@@ -85,6 +89,7 @@ type_noise = args.type_noise
 ampl = args.amplitude_noise
 n_avrg = args.n_exps
 save_res_dir = args.root_dir
+embedding_method = args.embedding
 
 # Create directory for results if it does not already exist
 if save_res_dir:
@@ -92,19 +97,23 @@ if save_res_dir:
 
 print("n:{}, k:{}, dim:{}, ampl:{}, "
       "type_matrix:{}, scaled:{}, "
-      "norm_laplacian:{}, "
+      "norm_laplacian:{}, embd method:{}, "
       "n_avrg:{}".format(n, k, dim, ampl,
                          type_matrix,
                          scaled,
-                         norm_laplacian, n_avrg))
+                         norm_laplacian,
+                         embedding_method,
+                         n_avrg))
 
 if save_res_dir:
     # Check if the file already exists and read results if so
     fn = "n_{}-k_{}-dim_{}-ampl_{}" \
-         "-type_mat_{}" \
+         "-type_mat_{}-embedding_{}" \
          "-scaled_{}-norm_laplacian_{}-n_avrg_{}." \
          "res".format(n, k, dim, ampl,
-                      type_matrix, scaled,
+                      type_matrix,
+                      embedding_method,
+                      scaled,
                       norm_laplacian, n_avrg)
     fn = save_res_dir + "/" + fn
     if os.path.isfile(fn):
@@ -113,12 +122,14 @@ if save_res_dir:
                                scaled,
                                norm_laplacian,
                                n_avrg,
-                               save_res_dir)
+                               save_res_dir,
+                               embedding_method)
     else:
         # Run the experiments if the result file does not already exist
         (mn, stdv, scores) = run_one_exp(n, k, dim, ampl, type_matrix, n_avrg,
                                          norm_laplacian=norm_laplacian,
-                                         scale_embedding=scaled)
+                                         scale_embedding=scaled,
+                                         embedding_method=embedding_method)
     # Print results
     print("MEAN_SCORE:{}, STD_SCORE:{}"
           "".format(mn, stdv))

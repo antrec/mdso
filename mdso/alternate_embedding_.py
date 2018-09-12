@@ -169,8 +169,8 @@ def metric_MDS_embedding(adjacency, n_components=8, eigen_solver=None,
     method = manifold.MDS(n_components=n_components, metric=metric,
                           random_state=random_state,
                           dissimilarity='precomputed',
-                          eps=1e-5,
-                          max_iter=3000)
+                          eps=0.0001,
+                          max_iter=500)
 
     method.fit(dist_mat)
     embedding = method.embedding_
@@ -193,8 +193,13 @@ def tSNE_embedding(adjacency, n_components=8, eigen_solver=None,
     dist_mat *= -1
     dist_mat -= dist_mat.min()
 
+    if n_components > 3:
+        tsne_method = 'exact'
+    else:
+        tsne_method = 'barnes_hut'
     method = manifold.TSNE(n_components=n_components, metric='precomputed',
-                           random_state=random_state)
+                           random_state=random_state,
+                           method=tsne_method)
 
     method.fit(dist_mat)
     embedding = method.embedding_[:, :]
@@ -207,7 +212,7 @@ def get_embedding(adjacency, n_components=8, eigen_solver=None,
                    norm_adjacency=False, scale_embedding=False,
                    verb=0,
                    method='spectral'):
-    
+    drop_first = False
     if method == 'cMDS':
         embedding = classical_MDS_embedding(adjacency,
                                             n_components=n_components,
@@ -259,6 +264,7 @@ def get_embedding(adjacency, n_components=8, eigen_solver=None,
                                    verb=verb)
     
     else:
+        drop_first = True
         embedding = spectral_embedding(adjacency,
                                        n_components=n_components,
                                        eigen_solver=eigen_solver,
@@ -288,7 +294,7 @@ if __name__ == '__main__':
     t0 = time()
     n = 500
     type_noise = 'gaussian'
-    ampl_noise = 0.01
+    ampl_noise = 0.5
     type_similarity = 'CircularStrongDecrease'
     apply_perm = False
     # Build data matrix
@@ -305,7 +311,7 @@ if __name__ == '__main__':
     norm_lap_opts = ['unnormalized', 'symmetric', 'random_walk']
     scaling_opts = [False, 'CTD', 'heuristic']
     norm_adj_opts = ['coifman', None]
-    # norm_adj_opts = [None]
+    norm_adj_opts = [None]
     for norm_lap in [False]:
         for scale in scaling_opts:
             for norm_adj in norm_adj_opts:
@@ -332,13 +338,17 @@ if __name__ == '__main__':
                 # 
                 fig = plt.figure()
                 axes = fig.subplots(2, 2)
-                for idx, method in enumerate(['spectral', 'cMDS', 'MDS', 'NMDS']):
+                for idx, method in enumerate(['spectral', 'cMDS', 'MDS', 'TSNE']):
                     t_b = time()
+                    if method == 'spectral':
+                        drop_first = True
+                    else:
+                        drop_first = False
                     embedding = get_embedding(mat, norm_laplacian=norm_lap,
                                                 scale_embedding=scale,
                                                 norm_adjacency=norm_adj,
-                                                drop_first=True,
-                                                n_components=6,
+                                                drop_first=drop_first,
+                                                n_components=5,
                                                 eigen_solver='arpack',
                                                 method=method)
 
@@ -352,7 +362,7 @@ if __name__ == '__main__':
                                                                 time()-t_b))
                     i_ax = idx // 2
                     j_ax = idx - (2) * i_ax
-                    axes[i_ax, j_ax].scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2],
+                    axes[i_ax, j_ax].scatter(embedding[:, 0], embedding[:, 1],
                                              c=np.arange(n))
                     axes[i_ax, j_ax].set_title(method)
                 # fig = plt.figure()
@@ -361,6 +371,6 @@ if __name__ == '__main__':
                 #         c=np.arange(n))
                 # # plt.title("3d embedding of synthetic linear banded matrix")
                 # plt.show()
+                plt.tight_layout
                 plt.show()
 
- 

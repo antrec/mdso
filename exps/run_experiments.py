@@ -19,7 +19,8 @@ from mdso import SimilarityMatrix, SpectralOrdering, evaluate_ordering
 
 def run_one_exp(n, k, dim, ampl, type_matrix, n_avrg,
                 type_noise='gaussian', norm_laplacian='unnormalized',
-                norm_adjacency=False, scale_embedding='heuristic'):
+                norm_adjacency=False, scale_embedding='heuristic',
+                embedding_method='spectral'):
     """
     Run n_avrg experiments for a given set of parameters, and return the mean
     kendall-tau score and the associated standard deviation (among the
@@ -42,7 +43,8 @@ def run_one_exp(n, k, dim, ampl, type_matrix, n_avrg,
                                     norm_laplacian=norm_laplacian,
                                     scale_embedding=scale_embedding,
                                     circular=circular,
-                                    merge_if_ccs=True)
+                                    merge_if_ccs=True,
+                                    embedding_method=embedding_method)
 
     # Initialize array of results
     scores = np.zeros(n_avrg)
@@ -77,15 +79,16 @@ def listify(*args):
 
 
 def fetch_res(n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian, n_avrg,
-              save_res_dir):
+              save_res_dir, embedding_method):
     """
     Get the results from a given experiment when they were saved to a file,
     in order to use them for plotting in plot_from_res, or not to redo the same
     computation twice in run_synthetic_exps.
     """
-    fn = "n_{}-k_{}-dim_{}-ampl_{}-type_mat_{}" \
+    fn = "n_{}-k_{}-dim_{}-ampl_{}-type_mat_{}-embedding_{}" \
          "-scaled_{}-norm_laplacian_{}-n_avrg_{}.res".format(
-             n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian, n_avrg)
+             n, k, dim, ampl_noise, type_mat, embedding_method,
+             scaled, norm_laplacian, n_avrg)
     fn = save_res_dir + "/" + fn
     with open(fn, 'r') as f:
         first_line = f.readlines()[0]
@@ -96,15 +99,16 @@ def fetch_res(n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian, n_avrg,
 
 def fetch_res_full(n, k, dim, ampl_noise, type_mat,
                    scaled, norm_laplacian, n_avrg,
-                   save_res_dir):
+                   save_res_dir, embedding_method):
     """
     Get the results from a given experiment when they were saved to a file,
     in order to use them for plotting in plot_from_res, or not to redo the same
     computation twice in run_synthetic_exps.
     """
-    fn = "n_{}-k_{}-dim_{}-ampl_{}-type_mat_{}" \
+    fn = "n_{}-k_{}-dim_{}-ampl_{}-type_mat_{}-embedding_{}" \
          "-scaled_{}-norm_laplacian_{}-n_avrg_{}.res".format(
-             n, k, dim, ampl_noise, type_mat, scaled, norm_laplacian, n_avrg)
+             n, k, dim, ampl_noise, type_mat, embedding_method,
+             scaled, norm_laplacian, n_avrg)
     fn = save_res_dir + "/" + fn
     with open(fn, 'r') as f:
         full = " ".join(line.rstrip('\n') for line in f)
@@ -118,7 +122,8 @@ def fetch_res_full(n, k, dim, ampl_noise, type_mat,
 
 
 def run_synthetic_exps(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
-                       norm_laplacian_l=None, n_avrg=20, save_res_dir=None):
+                       norm_laplacian_l=None, embedding_method_l=['spectral'],
+                       n_avrg=20, save_res_dir=None):
     """
     Run synthetic experiments. Parameters  ending with '_l' can be given in the
     form of a list. Then, experiments will be ran for each values in this list,
@@ -158,6 +163,11 @@ def run_synthetic_exps(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
     n_avrg : int, default 20
         number of experiments to run with a given combination of parameters,
         for the purpose of averaging and displaying standard deviations.
+
+    embedding_method : str, default 'spectral'
+        method used to compute the embedding. The code is designed for 'spectral',
+        but we still implemented MDS and some variants for experimental comparison
+        in the paper.
     """
 
     # Create save_res_dir if it does not exist
@@ -167,8 +177,11 @@ def run_synthetic_exps(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
 
     # Make arguments be lists even for singleton arguments
     (n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
-     norm_laplacian_l) = listify(n_l, k_l, dim_l, ampl_l, type_matrix_l,
-                                 scaled_l, norm_laplacian_l)
+     norm_laplacian_l, embedding_method_l) = listify(n_l, k_l, dim_l,
+                                                     ampl_l, type_matrix_l,
+                                                     scaled_l, 
+                                                     norm_laplacian_l,
+                                                     embedding_method_l)
 
     # Run experiments
     for n in n_l:
@@ -178,42 +191,51 @@ def run_synthetic_exps(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
                     for type_matrix in type_matrix_l:
                         for scaled in scaled_l:
                             for norm_laplacian in norm_laplacian_l:
-                                print("n:{}, k:{}, dim:{}, ampl:{}, "
-                                      "type_matrix:{}, scaled:{}, "
-                                      "norm_laplacian:{}, "
-                                      "n_avrg:{}".format(
-                                          n, k, dim, ampl, type_matrix, scaled,
-                                          norm_laplacian, n_avrg))
-                                # Check if result file already exists
-                                if save_res_dir:
-                                    fn = "n_{}-k_{}-dim_{}-ampl_{}-"\
-                                         "type_mat_{}-scaled_{}-norm_laplacia"\
-                                         "n_{}-n_avrg_{}.res".format(
-                                             n, k, dim, ampl, type_matrix,
-                                             scaled, norm_laplacian, n_avrg)
-                                    fn = save_res_dir + "/" + fn
-                                    if os.path.isfile(fn):
-                                        (mn, stdv) = fetch_res(
-                                            n, k, dim, ampl, type_matrix,
-                                            scaled, norm_laplacian, n_avrg,
-                                            save_res_dir)
-                                        # Print results
-                                        print("MEAN_SCORE:{}, STD_SCORE:{}"
-                                              "".format(mn, stdv))
-                                        continue
+                                for embedding_method in embedding_method_l:
+                                    print("n:{}, k:{}, dim:{}, ampl:{}, "
+                                        "type_matrix:{}, scaled:{}, "
+                                        "norm_laplacian:{}, embd method:{}, "
+                                        "n_avrg:{}".format(n, k, dim, ampl,
+                                                            type_matrix,
+                                                            scaled,
+                                                            norm_laplacian,
+                                                            embedding_method,
+                                                            n_avrg))
+                                    # Check if result file already exists
+                                    if save_res_dir:
+                                        fn = "n_{}-k_{}-dim_{}-ampl_{}" \
+                                            "-type_mat_{}-embedding_{}" \
+                                            "-scaled_{}-norm_laplacian_{}-n_avrg_{}." \
+                                            "res".format(n, k, dim, ampl,
+                                                        type_matrix,
+                                                        embedding_method,
+                                                        scaled,
+                                                        norm_laplacian, n_avrg)
+                                        fn = save_res_dir + "/" + fn
+                                        if os.path.isfile(fn):
+                                            (mn, stdv) = fetch_res(
+                                                n, k, dim, ampl, type_matrix,
+                                                scaled, norm_laplacian, n_avrg,
+                                                save_res_dir,
+                                                embedding_method)
+                                            # Print results
+                                            print("MEAN_SCORE:{}, STD_SCORE:{}"
+                                                "".format(mn, stdv))
+                                            continue
 
-                                (mn, stdv, scores) = run_one_exp(
-                                    n, k, dim, ampl, type_matrix, n_avrg,
-                                    scale_embedding=scaled,
-                                    norm_laplacian=norm_laplacian)
-                                # Print results
-                                print("MEAN_SCORE:{}, STD_SCORE:{}"
-                                      "".format(mn, stdv))
-                                if save_res_dir:
-                                    fh = open(fn, 'a')
-                                    print(mn, stdv, file=fh)
-                                    print(scores, file=fh)
-                                    fh.close()
+                                    (mn, stdv, scores) = run_one_exp(
+                                        n, k, dim, ampl, type_matrix, n_avrg,
+                                        scale_embedding=scaled,
+                                        norm_laplacian=norm_laplacian,
+                                        embedding_method=embedding_method)
+                                    # Print results
+                                    print("MEAN_SCORE:{}, STD_SCORE:{}"
+                                        "".format(mn, stdv))
+                                    if save_res_dir:
+                                        fh = open(fn, 'a')
+                                        print(mn, stdv, file=fh)
+                                        print(scores, file=fh)
+                                        fh.close()
     return
 
 
@@ -255,7 +277,8 @@ def check_args_for_plot(*args):
 
 
 def add_plot_exp(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
-                 n_avrg, save_res_dir, col='k', marker='d'):
+                 n_avrg, save_res_dir, col='k', marker='d',
+                 embedding_method='spectral'):
     """
     Function to add one plot for a given value of the varying parameter, in the
     figure created in plot_from_res.
@@ -267,7 +290,8 @@ def add_plot_exp(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
     stds = np.zeros(n_ampl)
     for (ix, ampl_noise) in enumerate(ampl_l):
         (mn, stdv) = fetch_res(n, k, dim, ampl_noise, type_matrix, scaled,
-                               norm_laplacian, n_avrg, save_res_dir)
+                               norm_laplacian, n_avrg, save_res_dir,
+                               embedding_method)
         means[ix] = mn
         stds[ix] = stdv
 
@@ -281,7 +305,8 @@ def add_plot_exp(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
 
 
 def add_plot_exp_full(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
-                      n_avrg, save_res_dir, col='k', marker='d'):
+                      n_avrg, save_res_dir, col='k', marker='d',
+                      embedding_method='spectral'):
     """
     Function to add one plot for a given value of the varying parameter, in the
     figure created in plot_from_res.
@@ -294,10 +319,12 @@ def add_plot_exp_full(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
     gain_uppers = np.zeros(n_ampl)
     for (ix, ampl_noise) in enumerate(ampl_l):
         l_values = fetch_res_full(n, k, dim, ampl_noise, type_matrix, scaled,
-                                  norm_laplacian, n_avrg, save_res_dir)
+                                  norm_laplacian, n_avrg, save_res_dir,
+                                  embedding_method)
         l_values_baseline = fetch_res_full(n, k, 1, ampl_noise, type_matrix,
                                            scaled, norm_laplacian,
-                                           n_avrg, save_res_dir)
+                                           n_avrg, save_res_dir,
+                                           embedding_method)
         l_values = np.array(l_values)
         l_values_baseline = np.array(l_values_baseline)
         if len(l_values_baseline) != n_avrg or len(l_values) != n_avrg:
@@ -323,7 +350,8 @@ def add_plot_exp_full(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
 
 def plot_from_res(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
                   norm_laplacian_l=None, n_avrg=20, save_res_dir=None,
-                  save_fig_path=None):
+                  save_fig_path=None,
+                  embedding_method_l='spectral'):
     """
     Plot the kendall-tau score vs the noise amplitude for several values of one
     varying parameter. The varying parameter can be chosen amongst
@@ -338,10 +366,11 @@ def plot_from_res(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
     (list_of_args,
      the_l_arg, l_arg_ix) = check_args_for_plot(n_l, k_l, dim_l, ampl_l,
                                                 type_matrix_l, scaled_l,
-                                                norm_laplacian_l)
+                                                norm_laplacian_l,
+                                                embedding_method_l)
 
     arg_names = ['n', 'k_nbrs', 'dim', 'noise_ampl', 'type_mat', 'scaled',
-                 'norm_laplacian']
+                 'norm_laplacian', 'embedding_method']
     listed_arg_name = arg_names[l_arg_ix]
 
     l_legend = []
@@ -350,10 +379,12 @@ def plot_from_res(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
     markers_l = ['d', 'o', 's', 'p', 'v', '^', 'D', '>']
     plt.subplots(1)
     for (ix, these_args) in enumerate(list_of_args):
-        (n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian) = these_args
+        (n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
+        embedding_method) = these_args
         add_plot_exp(n, k, dim, ampl_l, type_matrix, scaled, norm_laplacian,
                      n_avrg, save_res_dir, col=color_l[ix],
-                     marker=markers_l[ix])
+                     marker=markers_l[ix],
+                     embedding_method=embedding_method)
         this_arg_val = the_l_arg[ix]
         if listed_arg_name == 'dim' and this_arg_val == 1:
             l_legend.append("baseline")

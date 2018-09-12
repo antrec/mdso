@@ -216,7 +216,7 @@ class SpectralOrdering():
         else:
             ordering = merge_conn_comp(partial_orderings, X,
                                        h=self.k_nbrs)
-            if not type(ordering[0] == list):
+            if not type(ordering[0]) == list:
                 ordering = np.array(ordering)
         return ordering
 
