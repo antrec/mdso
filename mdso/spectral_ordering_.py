@@ -95,8 +95,12 @@ class SpectralBaseline():
                 else:
                     X_sub = X[cc, :]
                     X_sub = X_sub.T[cc, :].T
+                    n_comp = 9
+                    if n_sub < n_comp:
+                        n_comp = n_sub - 1
                     sub_embedding = spectral_embedding(
-                        X_sub, norm_adjacency=self.norm_adjacency,norm_laplacian=self.norm_laplacian,eigen_solver=self.eigen_solver,scale_embedding=self.scale_embedding)
+                        X_sub, norm_adjacency=self.norm_adjacency,norm_laplacian=self.norm_laplacian,eigen_solver=self.eigen_solver,scale_embedding=self.scale_embedding,
+                        n_components=n_comp)
                     sub_perm = get_linear_ordering(sub_embedding)
                     sub_ord = cc[sub_perm]
                 all_sub_ords = np.append(all_sub_ords, sub_ord)
@@ -104,11 +108,15 @@ class SpectralBaseline():
 
         else:
             # Get 1d or 2d Spectral embedding to retrieve the latent ordering
+            n_comp = 9
+            if n_ < n_comp:
+                n_comp = n_ - 1
             self.new_embedding_ = spectral_embedding(
                 X, norm_adjacency=self.norm_adjacency,
                 norm_laplacian=self.norm_laplacian,
                 eigen_solver=self.eigen_solver,
-                scale_embedding=self.scale_embedding)
+                scale_embedding=self.scale_embedding,
+                n_components=n_comp)
 
             if self.circular:
                 self.ordering_ = get_circular_ordering(self.new_embedding_)
