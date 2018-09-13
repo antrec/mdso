@@ -131,7 +131,7 @@ def fetch_res_full(n, k, dim, ampl_noise, type_mat,
 
 
 def run_synthetic_exps(n_l, k_l, dim_l, ampl_l, type_matrix_l, scaled_l,
-                       norm_laplacian_l=None, embedding_method_l=['spectral'],
+                       norm_laplacian_l=None, embedding_method_l='spectral',
                        n_avrg=20, save_res_dir=None):
     """
     Run synthetic experiments. Parameters  ending with '_l' can be given in the
